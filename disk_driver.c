@@ -12,6 +12,8 @@
 
 #define ERROR -1
 
+FILE* fp=NULL;
+
 
 static DiskDriver* createMMAP(size_t size, int mfd){
 	void * addr= 0;
@@ -116,7 +118,18 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 // reads the block in position block_num
 // returns -1 if the block is free accrding to the bitmap
 // 0 otherwise
-int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num);
+int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
+	void* blockRead=(void*) malloc(BLOCK_SIZE);
+	fseek(fp, block_num*BLOCK_SIZE, SEEK_SET);
+	fread(blockRead, BLOCK_SIZE, 1, fp);
+	int j;
+	for (j=0; j<BLOCK_SIZE; j++) {
+		memcpy(dest, blockRead, BLOCK_SIZE);
+	}
+	free(blockRead);
+	return 0;
+	//TODO eseguire il controllo per vedere se il block è free secondo la bitmap
+}
 
 // writes a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
