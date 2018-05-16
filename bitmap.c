@@ -17,7 +17,7 @@ BitMapEntryKey BitMap_blockToIndex(int num){
 
 
 // converts a bit to a linear index
-int BitMap_indexToBlock(int entry, uint8_t bit_num){
+int BitMap_indexToBlock(int entry, uint8_t bit_num){ //bit_num è un bit 0/1
 	return -1;
 
 }
@@ -40,7 +40,7 @@ int BitMap_set(BitMap* bmap, int pos, int status){
 	for(i=0;i < bmap->num_bits;i++){
 		if(i==pos){
 			bmap->entries[i]=status;
-			return 1;
+			return 0;
 		}
 	}
 	return -1;

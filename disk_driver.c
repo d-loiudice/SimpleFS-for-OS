@@ -13,6 +13,27 @@
 #define ERROR -1
 
 
+/* in header
+
+#define BLOCK_SIZE 512
+// this is stored in the 1st block of the disk
+typedef struct {
+  int num_blocks;
+  int bitmap_blocks;   // how many blocks in the bitmap
+  int bitmap_entries;  // how many bytes are needed to store the bitmap
+  
+  int free_blocks;     // free blocks
+  int first_free_block;// first block index
+} DiskHeader; 
+
+typedef struct {
+  DiskHeader* header; // mmapped
+  char* bitmap_data;  // mmapped (bitmap)
+  int fd; // for us
+} DiskDriver;
+
+*/
+
 static DiskDriver* createMMAP(size_t size, int mfd){
 	void * addr= 0;
 	int protections=PROT_READ | PROT_WRITE;
@@ -67,6 +88,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 		exit(1);
 	}
 	if(!file_existance){}	//if the file was new...
+	
 	DiskHeader* dh=(DiskHeader*) malloc(sizeof(DiskHeader));
 	
 	dh->num_blocks=num_blocks;
