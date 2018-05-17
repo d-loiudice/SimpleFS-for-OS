@@ -17,7 +17,7 @@ BitMapEntryKey BitMap_blockToIndex(int num){
 
 
 // converts a bit to a linear index
-int BitMap_indexToBlock(int entry, uint8_t bit_num){ //bit_num è un bit 0/1
+int BitMap_indexToBlock(int entry, uint8_t bit_num){ //bit_num è un bit 0/1 ? visto che è un char...
 	return -1;
 
 }
@@ -36,13 +36,11 @@ int BitMap_get(BitMap* bmap, int start, int status){
 
 // sets the bit at index pos in bmap to status
 int BitMap_set(BitMap* bmap, int pos, int status){
-	int i;
-	for(i=0;i < bmap->num_bits;i++){
-		if(i==pos){
-			bmap->entries[i]=status;
-			return 0;
-		}
+	
+	if(pos <0 || pos >= bmap->num_bits){
+		perror("ERR: posizione della bitmap non valida");
+		return -1;
 	}
-	return -1;
-
+	bmap->entries[pos]=status;
+	return 0;
 }
