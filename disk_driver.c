@@ -155,7 +155,18 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 
 // writes a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
-int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num);
+int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
+	void* blockWrite = (void*) malloc(BLOCK_SIZE);
+	fseek(fp, block_num*BLOCK_SIZE, SEEK_SET);
+	memcpy(blockWrite, src, BLOCK_SIZE);
+	fwrite(blockWrite, BLOCK_SIZE, 1, fp);
+	fflush(fp);
+	free(blockWrite);
+	return 0;
+
+	//TODO sempre il problema della bitmap non ancora implementata
+
+}
 
 // frees a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
