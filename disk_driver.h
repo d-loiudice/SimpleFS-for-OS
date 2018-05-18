@@ -1,5 +1,5 @@
 #pragma once
-#include "bitmap.h"
+#include "data_bitmap.h"
 
 #define BLOCK_SIZE 512
 // this is stored in the 1st block of the disk

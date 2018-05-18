@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "bitmap.h"
+#include "data_bitmap.h"
+
+// typedef struct{
+//   int num_bits;
+//   char* entries;
+// }  BitMap;
+
+// typedef struct {
+//   int entry_num;
+//   char bit_num;
+// } BitMapEntryKey;
+
 
 // converts a block index to an index in the array,
 // and a char that indicates the offset of the bit inside the array
@@ -9,9 +20,8 @@ BitMapEntryKey BitMap_blockToIndex(int num){
 	BitMapEntryKey* b_key=(BitMapEntryKey*)malloc(sizeof(BitMapEntryKey));
 
 	printf("[TODO] not completed");
-	b_key->bit_num = num;
 	b_key->entry_num = num;
-
+	b_key->bit_num = 1<<num;
 	return *b_key;	//TODO <- non buona idea allocazione dinamica??? poi la free???
 }
 

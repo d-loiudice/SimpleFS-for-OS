@@ -1,5 +1,5 @@
 #pragma once
-#include "bitmap.h"
+#include "data_bitmap.h"
 #include "disk_driver.h"
 
 /*these are structures stored on disk*/
