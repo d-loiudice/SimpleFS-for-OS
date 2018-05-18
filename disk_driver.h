@@ -4,10 +4,15 @@
 #define BLOCK_SIZE 512
 // this is stored in the 1st block of the disk
 typedef struct {
+  // Numero totali di blocchi nel disco
   int num_blocks;
-  int bitmap_blocks;   // how many blocks in the bitmap
-  int bitmap_entries;  // how many bytes are needed to store the bitmap
-  
+  int bitmap_blocks;   // how many blocks in the bitmap, numero di blocchi mappati sulla bitmap
+  int bitmap_entries;  // how many bytes are needed to store the bitmap, grandezza in byte della bitmap
+  // Per l'inodemap
+  // Numero di inode nella inodemap
+  int inodemap_blocks;
+  // Numero di byte necessari per memorizzare la inodemap
+  int inodemap_entries;
   int free_blocks;     // free blocks
   int first_free_block;// first block index
 } DiskHeader; 
