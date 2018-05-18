@@ -31,7 +31,7 @@ typedef struct {
 typedef struct {
   DiskHeader* header; // mmapped
   char* bitmap_data;  // mmapped (bitmap)
-  int fd; // for us
+  int fp; // for us
 } DiskDriver;
 
 */
@@ -84,8 +84,8 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 	}
 
 	//TODO possibile evitare controllo interno su esistenza file in fopen
-	int fd=open(filename, O_RDWR | O_CREAT);
-	if(fd==-1){
+	fp=open(filename, O_RDWR | O_CREAT);
+	if(fp==-1){
 		perror("errore in apertura file");
 		exit(1);
 	}
@@ -107,17 +107,17 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 	dd->header=dh;	// mmapped
 
 
-	DiskDriver* state = createMMAP(sizeof(DiskDriver),fd);
+	DiskDriver* state = createMMAP(sizeof(DiskDriver),fp);
 
 
 
 	// void* pmap = mmap(0, mystat.st_size, PROT_READ | PORT_WRITE,
-	// 			MAP_SHARED, fd, 0); 
+	// 			MAP_SHARED, fp, 0); 
 
 	// if( pmap == MAP_FAILED)
 	// {
 	// 	perror("errore in mmap");
-	// 	close(fd);
+	// 	close(fp);
 	// 	exit(1);
 	// }
 
@@ -126,7 +126,7 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 	//TODO FILLARE LA bitmap e altro
 
 
-	if( close(fd)){
+	if( close(fp)){
 		perror("errore in fclose");
 		exit(1);
 	}
