@@ -20,16 +20,15 @@ BitMapEntryKey BitMap_blockToIndex(int num){
 	BitMapEntryKey* b_key=(BitMapEntryKey*)malloc(sizeof(BitMapEntryKey));
 
 	printf("[TODO] not completed");
-	b_key->entry_num = num;
-	b_key->bit_num = 1<<num;
+	b_key->entry_num = num/8; 
+	b_key->bit_num = num % 8;
 	return *b_key;	//TODO <- non buona idea allocazione dinamica??? poi la free???
 }
 
 
 // converts a bit to a linear index
 int BitMap_indexToBlock(int entry, uint8_t bit_num){ //bit_num è un bit 0/1 ? visto che è un char...
-	return -1;
-
+	return (entry*8)+bit_num;   //TODO not sure
 }
 
 // returns the index of the first bit having status "status"

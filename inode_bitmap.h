@@ -32,7 +32,7 @@ typedef struct
 	// Dimensione del file ( in bytes ) massimo valore 4GB più o meno essendo long int = 32bit
 	unsigned long int dimensioneFile;
 	// Dimensione in blocchi (quanti blocchi occupa il file descritto da questo inode)
-	unsigned int dimensioneBlocchi;
+	unsigned int dimensioneInBlocchi;
 	// Tipo di file ( 'r' = file regolare, 'd' = directory, ecc... )
 	char tipoFile;
 	// Indice del primo blocco del file (LINKED LIST BLOCKS)
@@ -40,10 +40,10 @@ typedef struct
 	
 	/// NO NEED: non avevo lette le specifiche
 	// Gestione dell'indirizzamento ai blocchi contenente il contenuto del file
-	// Per ora massima dimensione massima file possibile con questi puntatori = 1GB ( circa 1 082 202 112 bytes )
+	// Per ora massima dimensione del file possibile con questi puntatori = 1GB ( circa 1 082 202 112 bytes )
 	// en.wikipedia.org/wiki/Inode_pointer_structure
 	// Sulle slide è Indexed Allocation, del pdf File System Implementation
-	// Se settato a -1, non punta da nessuna parte 
+	// ----Se settato a -1, non punta da nessuna parte 
 	// Puntatore ai blocchi diretti 12: contengono l'indice del blocco contenente il contenuto del file
 	// Possibiltà di accedere ai primi 12*(BLOCK_SIZE - HEADER_SIZE) del file 
 	// [] -> [contenuto del file]
@@ -73,16 +73,18 @@ typedef struct
 	int indice;
 	// La struttura inode
 	Inode* inode;
+	//num bit corrispondente alla bitmap di inode
+	char bit_num;
 } InodeMapEntryKey;
 
 // Dato l'indice della InodeMap, ritorna l'oggetto InodeMapEntryKey corrispondente
 InodeMapEntryKey InodeMap_getFromIndex(int indice);
 
 // Data l'inodemap e una posizione di partenza, trova il primo indice corrispondente allo stato status ( 0 libero, 1 occupata )
-int InodeMap_get(InodeMap* inodemap, int start, unsigned char status)
+int InodeMap_get(InodeMap* inodemap, int start, unsigned char status);
 
 // Data l'inodemap, imposta lo stato status (0 / 1) alla posizione pos
-int InodeMap_set(InodeMap* inodemap, int pos, unsigned char status)
+int InodeMap_set(InodeMap* inodemap, int pos, unsigned char status);
 
 
 
