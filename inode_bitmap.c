@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "inode_bitmap.h"
+// Inode Bitmap: come per data solo che char array contiene info per bit su allocazione di inode 
+//(blocchi di info associati ad ogni file)
+
 
 // Dato l'indice della InodeMap, ritorna l'oggetto InodeMapEntryKey corrispondente
 InodeMapEntryKey InodeMap_getFromIndex(int indice){
-	InodeMapEntryKey* imek = (InodeMapEntryKey*) malloc(sizeof(InodeMapEntryKey));
-	imek->indice=indice/8;
-	imek->inode=NULL;
-	imek->bit_num=indice % 8;
-	return *imek;
+	InodeMapEntryKey imek;
+	imek.indice=indice/8;
+	imek.inode=NULL;
+	imek.bit_num=indice % 8;
+	return imek;
 }
 
 // Data l'inodemap e una posizione di partenza, trova il primo indice corrispondente allo stato status ( 0 libero, 1 occupata )

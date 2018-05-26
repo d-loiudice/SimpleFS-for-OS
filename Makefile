@@ -8,10 +8,7 @@ BINS= simplefs_test
 
 OBJS = inode_bitmap.o data_bitmap.o disk_driver.o simplefs.o #add here your object files
 
-HEADERS=inode_bitmap.h\
-	data_bitmap.h\
-	disk_driver.h\
-	simplefs.h
+HEADERS=
 
 %.o:	%.c $(HEADERS)
 	$(CC) $(CCOPTS) -c -o $@  $<

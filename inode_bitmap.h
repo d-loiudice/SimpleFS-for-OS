@@ -86,5 +86,7 @@ int InodeMap_get(InodeMap* inodemap, int start, unsigned char status);
 // Data l'inodemap, imposta lo stato status (0 / 1) alla posizione pos
 int InodeMap_set(InodeMap* inodemap, int pos, unsigned char status);
 
+//inizializza la inode map (serve????)
+InodeMap InodeMap_init(void);
 
 

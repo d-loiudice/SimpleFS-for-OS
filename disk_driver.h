@@ -9,17 +9,20 @@ typedef struct {
   int bitmap_blocks;   // how many blocks in the bitmap, numero di blocchi mappati sulla bitmap
   int bitmap_entries;  // how many bytes are needed to store the bitmap, grandezza in byte della bitmap
   // Per l'inodemap
-  // Numero di inode nella inodemap
-  int inodemap_blocks;
-  // Numero di byte necessari per memorizzare la inodemap
-  int inodemap_entries;
-  int free_blocks;     // free blocks
-  int first_free_block;// first block index
+  int inodemap_blocks;  // Numero di inode nella inodemap
+  int inodemap_entries;   // Numero di byte necessari per memorizzare la inodemap
+  
+  int dataFree_blocks;     // free blocks of data
+  int dataFirst_free_block;// first block index data 
+
+  int inodeFree_blocks;     // free blocks of inode <- (necessario ????)
+  int inodeFirst_free_block;// first block index
 } DiskHeader; 
 
 typedef struct {
   DiskHeader* header; // mmapped
-  char* bitmap_data;  // mmapped (bitmap)
+  char* bitmap_data_values;  // mmapped (data bitmap)
+  char* bitmap_inode_values;  //mmaped <- (necessario introdurlo???)  
   int fd; // for us
 } DiskDriver;
 
