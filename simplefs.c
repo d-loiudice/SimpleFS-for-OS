@@ -17,7 +17,7 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk){
 void SimpleFS_format(SimpleFS* fs);
 
 // creates an empty file in the directory d
-// returns null on error (file existing, no free blocks)
+// returns null on error (file existing, no free blocks inodes and datas)
 // an empty file consists only of a block of type FirstBlock
 FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename);
 

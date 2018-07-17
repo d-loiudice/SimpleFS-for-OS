@@ -1,5 +1,20 @@
 #pragma once
+#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+/*	BIT MATH OPERATIONS MACRO */
+//get the bit in i position of c
+#define bit_get(c,i) ((c) & (1<<(i) ))	
+//set the bit in i position of clear  
+#define bit_set(c,i) ((c) |= (1<<(i) ))	
+//clear the bit in i position of c 
+#define bit_clear(c,i) ((c) &= ~(1<<(i) ))	
+//flip the bit in i position of c
+#define bit_flip(c,i) ((c) ^= (1<<(i) ))	
+//check if the bit in i of c is one (1) or zero (0)
+#define bit_is_one(c,i) (( (c) & (1<<(i) ) )> 0)
+
 
 typedef struct{
   int num_bits;

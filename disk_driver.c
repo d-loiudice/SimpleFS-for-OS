@@ -76,10 +76,14 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 	}
 
 	DiskHeader* dh=(DiskHeader*) malloc(sizeof(DiskHeader));
+	// Bisogna usare l'indirizzo passato tramite parametro nella funzione (disk)
+	// Bisogna scegliere se effettuare l'allocazione fuori o dentro la funzione
 	DiskDriver* dd=(DiskDriver*) malloc(sizeof(DiskDriver));
 	DiskDriver* dd_ptr;
 	if(!file_existance){//if the file was new...
 		//init di diskHeader e diskdriver 
+	// Se il file non esiste, inizializzo la struttura DiskHeader per poi scriverla sul file 
+	// e inizializzazione della BitMap e dell'InodeMap (inizializzare tutti 0)
 	  dh->bitmap_blocks=0;   // numero di blocchi mappati sulla bitmap, per ora 0
 	  dh->bitmap_entries=1+num_blocks/8;  //  grandezza in byte della bitmap: ogni blocco= 1/8 di byte
 	  // Per l'inodemap
@@ -103,6 +107,10 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
   	  
 	}
 
+			// Se il file esiste, leggo il DiskHeader che è memorizzato all'inizio del file
+		// leggo di sizeof(DiskHeader)
+		// Successivamente riempio la struttura DiskDriver
+		// Mmap della BitMap e dell' InodeMap
 	//TODO FILLARE LA bitmap e altro
 
 
@@ -125,7 +133,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	fseek(fp, block_num*BLOCK_SIZE, SEEK_SET);
 	fread(blockRead, BLOCK_SIZE, 1, fp);
 	int j;
-	for (j=0; j<BLOCK_SIZE; j++) {
+	for (j=0; j<BLOCK_SIZE; j++) {Se il
 		memcpy(dest, blockRead, BLOCK_SIZE);
 	}
 	free(blockRead);

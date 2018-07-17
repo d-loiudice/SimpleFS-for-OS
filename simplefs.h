@@ -1,7 +1,8 @@
 #pragma once
-#include "data_bitmap.h"
+#include "bitmap.h"
 #include "disk_driver.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 /*these are structures stored on disk*/
 
 // header, occupies the first portion of each block in the disk
