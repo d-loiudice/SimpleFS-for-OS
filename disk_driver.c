@@ -11,6 +11,8 @@
 #include "disk_driver.h"
 
 #define ERROR -1
+#define NUM_SUPER 1
+#define NUM_BITMAPS 2
 #define NUM_INODES 5
 #define INODES_PER_BLOCK 16
 
@@ -174,7 +176,8 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 // 0 otherwise
 int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	
-	//check if block is free according to bitmap
+	
+	block_num= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
 	char* bm=disk->bitmap_data_values;
 	
 	BitMapEntryKey k=BitMap_blockToIndex(block_num);
@@ -191,7 +194,8 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 		perror("ERR:");
 		exit(1);
 	}
-
+	
+	//TODO last accessed in inode has to be updated
 	if(read(disk->fd, blockRead, BLOCK_SIZE) < 0 ){
 		perror("ERR:");
 		exit(1);
@@ -215,9 +219,28 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	return 0;
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
+	block_num= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
+	char* bm=disk->bitmap_data_values;
+	BitMapEntryKey k= BitMap_blockToIndex(block_num);
 
-
-	return -1;
+	//TODO modify the bitmap
+	if( bit_get(bm[k.entry_num],k.bit_num)==0 ){	//intere block (8 celle) all zeros
+		perror("cannot write cause block not allocated");
+		return -1;
+	}
+	
+	if(lseek(disk->fd, block_num*BLOCK_SIZE, SEEK_SET) < 0 ){
+		perror("ERR:");
+		exit(1);
+	}
+	
+	//TODO last accessed in inode has to be updated
+	if(write(disk->fd, src, BLOCK_SIZE) < 0 ){
+		perror("ERR:");
+		exit(1);
+	}
+	return 0;
+	
 }
 
 // frees a block in position block_num, and alters the bitmap accordingly
