@@ -31,29 +31,18 @@ void bits_print(char* arr,int dim){
 }
 
 int main(int agc, char** argv) {
-  //#if DEBUG
-	  // prova di linking TODO da rimuovere 
-	  printf("INIZIO DEBUGGING FUNZIONI...\n");
-	  
-	  printf("----| diskDriver MODULE |----: \n");
-	  printf("\t init: void\n"); DiskDriver_init(NULL,"fileTest.txt",2);
-	  //printf("read: %d \n\n",DiskDriver_readBlock(NULL,NULL,1) );
-	  
-	  printf("FirstBlock size %ld\n", sizeof(FirstFileBlock));
-	  printf("DataBlock size %ld\n", sizeof(FileBlock));
-	  printf("FirstDirectoryBlock size %ld\n", sizeof(FirstDirectoryBlock));
-	  printf("DirectoryBlock size %ld\n", sizeof(DirectoryBlock));
-	  
-		
-	  BitMapEntryKey k = BitMap_blockToIndex(3);
-	  printf("%d \n %d \n",k.entry_num,k.bit_num);
+	//#if DEBUG
+	// prova di linking TODO da rimuovere 
+	printf("INIZIO DEBUGGING FUNZIONI...\n");
+
+	
+	
+	//-------------------BITMAP TESTING-----------------------------------
+	
+	printf("DEBUGGING BITMAP...\n");
 
 
-	  //-----------------BITMAP TESTING-----------------------------------
-	  	  printf("DEBUGGING BITMAP...\n");
-
-
-// converts a bit to a linear index
+	// converts a bit to a linear index
 	int r1=BitMap_indexToBlock(2, 7);
 	printf("%d \n ",r1);
 	r1=BitMap_indexToBlock(2, 8);
@@ -90,7 +79,32 @@ int main(int agc, char** argv) {
 
 		printf("get %d \n ",r1);
 
+	BitMapEntryKey k = BitMap_blockToIndex(3);
+	printf("%d \n %d \n",k.entry_num,k.bit_num);
 
+
+	//-------------------DISK_DRIVER TESTING-----------------------------------
+
+	printf("----| DEBUGGING DISK_DRIVER |----: \n");
+	printf("\t init: void\n"); DiskDriver_init(NULL,"fileTest.txt",2);
+	/*
+	printf("\t readBlock: void\n"); DiskDriver_readBlock(disk, void* dest, int block_num);
+	printf("\t writeBlock: void\n");DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num);
+	printf("\t freeBlock: void\n"); DiskDriver_freeBlock(DiskDriver* disk, int block_num);
+	printf("\t getFreeBlock: void\n"); DiskDriver_getFreeBlock(DiskDriver* disk, int start);
+	printf("\t flush: void\n"); DiskDriver_flush(DiskDriver* disk);
+	*/
+
+	//-------------------SIMPLE_FS TESTING-----------------------------------
+
+	printf("----| DEBUGGING simplefs |----: \n");
+	printf("FirstBlock size %ld\n", sizeof(FirstFileBlock));
+	printf("DataBlock size %ld\n", sizeof(FileBlock));
+	printf("FirstDirectoryBlock size %ld\n", sizeof(FirstDirectoryBlock));
+	printf("DirectoryBlock size %ld\n", sizeof(DirectoryBlock));
+
+
+	
 
  // #endif
 }

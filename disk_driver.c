@@ -50,6 +50,8 @@ static void deleteMMAP(void* addr){
 // if the file was new
 // compiles a disk header, and fills in the bitmap of appropriate size
 // with all 0 (to denote the free space);
+
+//side effect su disk
 void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 
 	// 2 diversi casi: il file è creato / il file è aperto
@@ -83,36 +85,60 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 	if(!file_existance){//if the file was new...
 		//init di diskHeader e diskdriver 
 	// Se il file non esiste, inizializzo la struttura DiskHeader per poi scriverla sul file 
-	// e inizializzazione della BitMap e dell'InodeMap (inizializzare tutti 0)
-	  dh->bitmap_blocks=0;   // numero di blocchi mappati sulla bitmap, per ora 0
-	  dh->bitmap_entries=1+num_blocks/8;  //  grandezza in byte della bitmap: ogni blocco= 1/8 di byte
+	// e inizializzazione della BitMap e dell'InodeMap (inizializzare tutti 0)	
+
+	  BitMap data_bm=  BitMap_init();	//tutte a 0
+	  BitMap inode_bm=  BitMap_init();
+	  int free_data_counter= data_bm.num_bits;
+	  int free_inode_counter= inode_bm.num_bits;
+
+	  //On Header...
+	  int i,dpos;
+	  for(i=0;i<num_blocks;i++){
+		  dpos=BitMap_get(&data_bm,0,0); // search in bitmap first bit for 0
+		  if(dpos!=0){
+		  	perror("not found place in data bitmap");		  
+		  	exit(1);
+		  	}
+		  BitMap_set(&data_bm,dpos,1);
+		  free_data_counter--;
+	  }
+
+	  dh->bitmap_blocks= data_bm.num_bits;   // numero di blocchi mappati sulla bitmap, per ora 0
+	  dh->bitmap_bytes= data_bm.num_bits/8 +1 ;  //  grandezza in byte della bitmap: ogni blocco è un bit 
 	  // Per l'inodemap
-	  dh->inodemap_blocks=-1;  // Numero di inode nella inodemap
-	  dh->inodemap_entries=-1;   // Numero di byte necessari per memorizzare la inodemap
+	  dh->inodemap_blocks= inode_bm.num_bits ;  // Numero di inode nella inodemap, just one for the file
+	  dh->inodemap_bytes= inode_bm.num_bits/8 + 1;   // Numero di byte necessari per memorizzare la inodemap, just one at the moment
 	  
-	  dh->dataFree_blocks=-1;     // free blocks of data, dim della bitmap in blocchi - num_blocks ???
-	  dh->dataFirst_free_block=-1;// first block index data 
+	  dh->dataFree_blocks= free_data_counter;     // free blocks of data, dim della bitmap in blocchi - num_blocks ???
+	  dh->dataFirst_free_block= BitMap_get(&data_bm,0,0);// first block index data 
 
-	  dh->inodeFree_blocks=-1;     // free blocks of inode <- (necessario ????)
-	  dh->inodeFirst_free_block=-1;// first block index
+	  dh->inodeFree_blocks= free_inode_counter;     // free blocks of inode <- (necessario ????)
+	  dh->inodeFirst_free_block= BitMap_get(&inode_bm,0,0);// first block index
 		
-	  dd->header=dh; // mmapped
-	  BitMap bm= BitMap_init();	//tutte a 0
-
-  	  dd->bitmap_data_values=bm.entries;  // mmapped (data bitmap)
-  	  dd->bitmap_inode_values=NULL;  //mmaped <- (necessario introdurlo???)  
+	  //On Driver...
+	  dd->header= dh; 
+  	  dd->bitmap_data_values= data_bm.entries;  
+  	  dd->bitmap_inode_values= inode_bm.entries;  
   	  dd->fd=fp; // for us
 
-  	  dd_ptr = createMMAP(NULL,sizeof(DiskDriver),-1);	// dubbio su mmap di diskheader
   	  
 	}
-
-			// Se il file esiste, leggo il DiskHeader che è memorizzato all'inizio del file
+	else{	//file already existing
+			
+		// Se il file esiste, leggo il DiskHeader che è memorizzato all'inizio del file
 		// leggo di sizeof(DiskHeader)
 		// Successivamente riempio la struttura DiskDriver
 		// Mmap della BitMap e dell' InodeMap
-	//TODO FILLARE LA bitmap e altro
+		//TODO FILLARE LA bitmap perche il file gia è presente e magari contiene roba che va riportata
+		
+		//TODO very not sure what to do
+		dh=disk->header;
+		dd=disk;
 
+	}
+
+	dd_ptr = createMMAP(NULL,sizeof(DiskDriver),-1);	// dubbio su mmap di diskheader
 
 	if( close(fp)){
 		perror("errore in fclose");
@@ -140,6 +166,10 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	return 0;
 	*/
 	//TODO eseguire il controllo per vedere se il block è free secondo la bitmap
+
+
+
+
 }
 
 // writes a block in position block_num, and alters the bitmap accordingly
