@@ -7,10 +7,10 @@ typedef struct {
   // Numero totali di blocchi nel disco
   int num_blocks;
   int bitmap_blocks;   // how many blocks in the bitmap, numero di blocchi mappati sulla bitmap
-  int bitmap_entries;  // how many bytes are needed to store the bitmap, grandezza in byte della bitmap
+  int bitmap_bytes;  // how many bytes are needed to store the bitmap, grandezza in byte della bitmap
   // Per l'inodemap
   int inodemap_blocks;  // Numero di inode nella inodemap
-  int inodemap_entries;   // Numero di byte necessari per memorizzare la inodemap
+  int inodemap_bytes;   // Numero di byte necessari per memorizzare la inodemap
   
   int dataFree_blocks;     // free blocks of data
   int dataFirst_free_block;// first block index data 
