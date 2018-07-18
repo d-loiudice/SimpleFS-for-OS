@@ -36,7 +36,25 @@ int main(int agc, char** argv) {
 	  printf("INIZIO DEBUGGING FUNZIONI...\n");
 	  
 	  printf("----| diskDriver MODULE |----: \n");
-	  printf("\t init: void\n"); DiskDriver_init(NULL,"fileTest.txt",2);
+	  printf("\t init: void\n"); 
+	  DiskDriver* dd = (DiskDriver*) malloc(sizeof(DiskDriver));
+	  DiskDriver_init(dd,"fileTest",50);
+	  printf("--DISKHEADER--\n");
+	  printf("File descriptor: %d\n", dd->fd);
+	  printf("Numero blocchi totali: %d\n", dd->header->num_blocks);
+	  printf("Numero blocchi mappati dalla bitmap_data: %d\n", dd->header->bitmap_blocks);
+	  printf("Grandezza in byte della bitmap_data: %d\n", dd->header->bitmap_entries);
+	  printf("Numero blocchi mappati dalla bitmap_inode: %d\n", dd->header->inodemap_blocks);
+	  printf("Grandezza in byte della bitmap_inode: %d\n", dd->header->inodemap_entries);
+	  printf("Numero blocchi data liberi: %d\n", dd->header->dataFree_blocks);
+	  printf("Indice primo blocco data libero: %d\n", dd->header->dataFirst_free_block);
+	  printf("Numero blocchi inode liberi: %d\n", dd->header->inodeFree_blocks);
+	  printf("Indice primo blocco inode libero: %d\n", dd->header->inodeFirst_free_block);
+	  printf("Bitmap data: \n");
+	  bits_print(dd->bitmap_data_values, 10);
+	  printf("Bitmap inode: \n");
+	  bits_print(dd->bitmap_inode_values, 10);
+	  printf("--DISKDRIVER END--\n");
 	  //printf("read: %d \n\n",DiskDriver_readBlock(NULL,NULL,1) );
 	  
 	  printf("FirstBlock size %ld\n", sizeof(FirstFileBlock));
@@ -63,7 +81,7 @@ int main(int agc, char** argv) {
 
 	BitMap bm =BitMap_init();	//inizializza la bitmap, creando array (vuoto)
 	bits_print(bm.entries,10);
-	BitMap* bmap = malloc(sizeof(BitMap));
+	BitMap* bmap = (BitMap*)malloc(sizeof(BitMap));
 	memcpy(bmap,&bm,sizeof(BitMap));
 
 	bits_print( bmap->entries,10);

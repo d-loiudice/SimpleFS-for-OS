@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <string.h> 
 #include <fcntl.h>
-
+#include <errno.h>
 
 #include "disk_driver.h"
 
@@ -15,7 +15,7 @@
 int fp=-1;
 int PageSize; 
 
-static DiskDriver* createMMAP(void* addr,size_t size, int mfd){
+/*static DiskDriver* createMMAP(void* addr,size_t size, int mfd){
 	
 	
 	int protections=PROT_READ | PROT_WRITE;
@@ -31,17 +31,17 @@ static DiskDriver* createMMAP(void* addr,size_t size, int mfd){
 	}
 
 	return state;
-}
+}*/
 
-static void deleteMMAP(void* addr){
+/*static void deleteMMAP(void* addr){
 
 	if (ERROR == munmap(addr,sizeof(DiskDriver) )){
 		perror("errore in unmap di deleteMMAP");
 		exit(1);
 	}
-}
+}*/
 
-				//LAVORO PER SINGOLO FILE (un file creato-scritto/letto-chiuso)TODO DA AMPLIARE
+//LAVORO PER SINGOLO FILE (un file creato-scritto/letto-chiuso)TODO DA AMPLIARE
 
 // opens the file (creating it if necessary_
 // allocates the necessary space on the disk
@@ -50,78 +50,121 @@ static void deleteMMAP(void* addr){
 // if the file was new
 // compiles a disk header, and fills in the bitmap of appropriate size
 // with all 0 (to denote the free space);
-void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
-
-	// 2 diversi casi: il file è creato / il file è aperto
-	char file_existance=0;
-	if( access( filename, F_OK ) != -1 ) {
-    // file exists
-		file_existance=1;
-	} else {
-    // file doesn't exist
-		file_existance=0;
+void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_blocks){
+	int fd;
+	DiskHeader* nuovoDiskHeader;
+	DiskHeader* diskHeader;
+	char* bitmapDataValues;
+	char* bitmapInodeValues;
+	void* zonaMappata;
+	/*int PageSize= (int)sysconf(_SC_PAGESIZE);
+	fprintf(stderr, "PageSize: %d\n", PageSize);*/
+	
+	// Verifica che il file del disco esista
+	if ( access(filename, F_OK) == 0 )
+	{
+		// Il file esiste
+		fd = open(filename, O_RDWR);
+		if ( fd != -1 )
+		{
+			// Mmappo i primi 3 blocchi del file, in quanto l'offset è una truffa
+			zonaMappata = mmap(NULL, 3*BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+			if ( zonaMappata != MAP_FAILED ) 
+			{
+				diskDriver->header = (DiskHeader*)zonaMappata;
+				diskDriver->bitmap_data_values = (char*)(zonaMappata+BLOCK_SIZE);
+				diskDriver->bitmap_inode_values = (char*)(zonaMappata+(2*BLOCK_SIZE));
+				diskDriver->fd = fd;
+				//DiskDriver_flush(diskDriver);
+			}
+			else
+			{
+				perror("Errore durante la mmap di tutta la prima parte del file (file esistente)\n");
+				exit(1);
+			}
+		}
+		else
+		{
+			perror("Errore durante l'apertura del file già esistente\n");
+			exit(1);
+		}
 	}
+	else
+	{
+		// Il file non esiste, lo devo creare
+		fd = open(filename, O_RDWR | O_CREAT, 0666);
+		if ( fd != -1 )
+		{
+			fprintf(stderr, "FD: %d\n", fd);
+			int index = 0;
+			while ( index < num_blocks*BLOCK_SIZE )
+			{
+				// Inizializzo il file tutto con byte 0 
+				if ( write(fd, "\0" , 1) <= 0 )
+				{
+					perror("Errore durante l'inizializzazione del nuovo file\n");
+					exit(1);
+				}
+				index = index + 1;
+			}
+			// Inizializzazione nuovo DiskHeader
+			nuovoDiskHeader = (DiskHeader*)malloc(sizeof(DiskHeader));
+			// Devo inizializzare il DiskHeader e le BitMap (data e inode)
+			nuovoDiskHeader->num_blocks = num_blocks;
+			/// NUMERI INODE FISSO PER ORA
+			// Quanti inode ho mappati sulla bitmap degli inode
+			nuovoDiskHeader->inodemap_blocks = 5*16;
+			// Grandezza dell'inodemap in byte, arrotondati per eccesso con BLOCK_SIZE
+			nuovoDiskHeader->inodemap_entries = BLOCK_SIZE;
+			
+			// 3 blocchi sono riservati al superblocco e le 2 bitmap (data e inodes), oltre ai 5 riservati agli inode
+			nuovoDiskHeader->bitmap_blocks = num_blocks - 3 - nuovoDiskHeader->inodemap_blocks/16;
+			nuovoDiskHeader->bitmap_entries = BLOCK_SIZE;
+			
+			// Nuovo file tutti i blocchi/inode sono vuoti
+			nuovoDiskHeader->dataFree_blocks = nuovoDiskHeader->bitmap_blocks;
+			nuovoDiskHeader->dataFirst_free_block = 0;
+			nuovoDiskHeader->inodeFree_blocks = nuovoDiskHeader->inodemap_blocks;
+			nuovoDiskHeader->inodeFirst_free_block = 0;
+						
+			// Mmap del DiskHeader e delle BitMap ( Data e Inodes )
+			// Mmap del diskheader all'inizio del file
+			fprintf(stderr, "BlockSize: %d\n", BLOCK_SIZE);
 
-	PageSize= (int)sysconf(_SC_PAGESIZE);	//serve per la mmap
-    if ( PageSize < 0) {
-    	perror("sysconf() error");
-    }
-
-
-	//TODO possibile evitare controllo interno su esistenza file in fopen
-	fp=open(filename, O_RDWR | O_CREAT|O_APPEND,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	if(fp==-1){
-		perror("errore in apertura file");
-		exit(1);
+			// Mmappo i primi 3 blocchi del file, in quanto l'offset è una truffa
+			zonaMappata = mmap(NULL, 3*BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+			if ( zonaMappata != MAP_FAILED ) 
+			{
+				diskDriver->header = (DiskHeader*)zonaMappata;
+				//fprintf(stderr, "Header: %s\n", (char*)diskDriver->header);
+				diskDriver->bitmap_data_values = (char*)(zonaMappata+BLOCK_SIZE);
+				diskDriver->bitmap_inode_values = (char*)(zonaMappata+(2*BLOCK_SIZE));
+				diskDriver->fd = fd;
+				fprintf(stderr, "FD: %d\n", fd);
+				fprintf(stderr, "FD in diskdriver: %d\n", fd);
+				// Copio il nuovo DiskHeader creato prima
+				memcpy(diskDriver->header, nuovoDiskHeader, sizeof(DiskHeader));
+				DiskDriver_flush(diskDriver);
+			}
+			else
+			{
+				perror("Errore durante la mmap di tutta la prima parte del file (nuovo file)\n");
+				exit(1);
+			}
+			
+			// BitMap bitmapData = BitMap_init();
+			// Non faccio l'inizializzazione della bitmap perché è già tutto a 0 >.<
+			
+			// Scrivo le strutture sul file, flush mmap
+			//DiskDriver_flush(diskDriver);
+		}
+		else
+		{
+			perror("Errore durante la creazione del file\n");
+			exit(1);
+		}
 	}
-
-	DiskHeader* dh=(DiskHeader*) malloc(sizeof(DiskHeader));
-	// Bisogna usare l'indirizzo passato tramite parametro nella funzione (disk)
-	// Bisogna scegliere se effettuare l'allocazione fuori o dentro la funzione
-	DiskDriver* dd=(DiskDriver*) malloc(sizeof(DiskDriver));
-	DiskDriver* dd_ptr;
-	if(!file_existance){//if the file was new...
-		//init di diskHeader e diskdriver 
-	// Se il file non esiste, inizializzo la struttura DiskHeader per poi scriverla sul file 
-	// e inizializzazione della BitMap e dell'InodeMap (inizializzare tutti 0)
-	  dh->bitmap_blocks=0;   // numero di blocchi mappati sulla bitmap, per ora 0
-	  dh->bitmap_entries=1+num_blocks/8;  //  grandezza in byte della bitmap: ogni blocco= 1/8 di byte
-	  // Per l'inodemap
-	  dh->inodemap_blocks=-1;  // Numero di inode nella inodemap
-	  dh->inodemap_entries=-1;   // Numero di byte necessari per memorizzare la inodemap
-	  
-	  dh->dataFree_blocks=-1;     // free blocks of data, dim della bitmap in blocchi - num_blocks ???
-	  dh->dataFirst_free_block=-1;// first block index data 
-
-	  dh->inodeFree_blocks=-1;     // free blocks of inode <- (necessario ????)
-	  dh->inodeFirst_free_block=-1;// first block index
-		
-	  dd->header=dh; // mmapped
-	  BitMap bm= BitMap_init();	//tutte a 0
-
-  	  dd->bitmap_data_values=bm.entries;  // mmapped (data bitmap)
-  	  dd->bitmap_inode_values=NULL;  //mmaped <- (necessario introdurlo???)  
-  	  dd->fd=fp; // for us
-
-  	  dd_ptr = createMMAP(NULL,sizeof(DiskDriver),-1);	// dubbio su mmap di diskheader
-  	  
-	}
-
-			// Se il file esiste, leggo il DiskHeader che è memorizzato all'inizio del file
-		// leggo di sizeof(DiskHeader)
-		// Successivamente riempio la struttura DiskDriver
-		// Mmap della BitMap e dell' InodeMap
-	//TODO FILLARE LA bitmap e altro
-
-
-	if( close(fp)){
-		perror("errore in fclose");
-		exit(1);
-	}
-
-	disk=dd_ptr;	//side effect e mi do 
-	//dd_ptr non freeable
-
+	
 }
 
 // reads the block in position block_num
@@ -140,6 +183,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	return 0;
 	*/
 	//TODO eseguire il controllo per vedere se il block è free secondo la bitmap
+	return 0;
 }
 
 // writes a block in position block_num, and alters the bitmap accordingly
@@ -155,7 +199,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	return 0;
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
-
+	return 0;
 }
 
 // frees a block in position block_num, and alters the bitmap accordingly
@@ -166,5 +210,16 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num);
 int DiskDriver_getFreeBlock(DiskDriver* disk, int start);
 
 // writes the data (flushing the mmaps)
-int DiskDriver_flush(DiskDriver* disk);
+// Returns -1 if operation not possible, 0 if successfull
+int DiskDriver_flush(DiskDriver* disk)
+{
+	int ret = -1;
+	
+	if ( msync(disk->header, 3*BLOCK_SIZE, MS_SYNC) != -1 )
+	{
+		ret = 0;
+	}
+
+	return ret;
+}
 
