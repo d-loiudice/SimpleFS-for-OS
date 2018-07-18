@@ -62,31 +62,27 @@ int main(int agc, char** argv) {
 	//bits_print(cc,5);
 	// sets the bit at index pos in bmap to status
 	r1= BitMap_set(bmap, 270, 1);
-
 	printf("set %d \n ",r1);
 
 	r1= BitMap_set(bmap, 20, 1);
-
 	printf("set %d \n ",r1);
 
 	bits_print(bmap->entries,10);
 
 	r1=BitMap_get( bmap, 270, 1);
-
-		printf("get %d \n ",r1);
+	printf("get %d \n ",r1);
 
 	r1=BitMap_get( bmap, 2, 1);
-
-		printf("get %d \n ",r1);
+	printf("get %d \n ",r1);
 
 	BitMapEntryKey k = BitMap_blockToIndex(3);
-	printf("%d \n %d \n",k.entry_num,k.bit_num);
+	printf("%d %d \n",k.entry_num,k.bit_num);
 
 
 	//-------------------DISK_DRIVER TESTING-----------------------------------
 
 	printf("----| DEBUGGING DISK_DRIVER |----: \n");
-	printf("\t init: void\n"); DiskDriver_init(NULL,"fileTest.txt",2);
+	//printf("\t init: void\n"); DiskDriver_init(NULL,"fileTest.txt",2);
 	/*
 	printf("\t readBlock: void\n"); DiskDriver_readBlock(disk, void* dest, int block_num);
 	printf("\t writeBlock: void\n");DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num);

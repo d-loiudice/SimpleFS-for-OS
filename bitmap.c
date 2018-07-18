@@ -41,7 +41,7 @@ int BitMap_indexToBlock(int entry, uint8_t bit_num){
 	return (entry*8)+bit_num;   
 }
 
-// returns the index of the first bit having status "status"
+// returns the LINEAR index of the first bit having status "status"
 // in the bitmap bmap, and starts looking from position start
 //so status is 1 or 0 
 
@@ -57,7 +57,7 @@ int BitMap_get(BitMap* bmap, int start, int status){
 			//printf("%d ",bit_get(bmap->entries[i],j));
 			char r=bit_get(bmap->entries[i],j)!=0?1:0;
 			if(  r== status)
-				return BitMap_indexToBlock(i,j);	
+				return BitMap_indexToBlock(i,j);	//LINEAR
 		}
 		j=0;
 	}
@@ -76,6 +76,7 @@ int BitMap_set(BitMap* bmap, int pos, int status){
 		perror("out of bitmap bound");
 		return -1;
 	}
+	/*
 	for(i=0; i < bmap->num_bits/8 ;i++){
 		for (j=0; j<8;j++){
 			 if( i==k.entry_num && j==k.bit_num){
@@ -84,7 +85,14 @@ int BitMap_set(BitMap* bmap, int pos, int status){
 			}
 		}
 	}
-	return -1;
+	*/
+
+	if(status==1)
+		bit_set(bmap->entries[k.entry_num],k.bit_num);
+	else
+		bit_clear(bmap->entries[k.entry_num],k.bit_num);
+
+	return status;
 }
 
 BitMap BitMap_init(void){

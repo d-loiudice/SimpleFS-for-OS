@@ -154,18 +154,28 @@ void DiskDriver_init(DiskDriver* disk, const char* filename, int num_blocks){
 // returns -1 if the block is free accrding to the bitmap
 // 0 otherwise
 int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
-	/*
+	
+	//check if block is free according to bitmap
+	char* bm=disk->bitmap_data_values;
+	
+	BitMapEntryKey k=BitMap_blockToIndex(block_num);
+
+	if( bit_get(bm[k.entry_num],k.bit_num)==0 ){	//intere block (8 celle) all zeros
+		perror("cannot read cause block in bitmap is zero");
+		return -1;
+	}
+
 	void* blockRead=(void*) malloc(BLOCK_SIZE);
-	fseek(fp, block_num*BLOCK_SIZE, SEEK_SET);
+	fseek(disk->fd, block_num*BLOCK_SIZE, SEEK_SET);
 	fread(blockRead, BLOCK_SIZE, 1, fp);
 	int j;
-	for (j=0; j<BLOCK_SIZE; j++) {Se il
+	for (j=0; j<BLOCK_SIZE; j++) {
 		memcpy(dest, blockRead, BLOCK_SIZE);
 	}
 	free(blockRead);
 	return 0;
-	*/
-	//TODO eseguire il controllo per vedere se il block è free secondo la bitmap
+	
+	
 
 
 
@@ -185,6 +195,9 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	return 0;
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
+
+	return -1;
+
 
 }
 
