@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "disk_driver.h"
 #include "simplefs.h"
 
@@ -25,7 +27,7 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 			directoryHandle->pos_in_dir = 0;
 			directoryHandle->pos_in_block = 0; 
 			directoryHandle->parent = NULL;
-			directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(DirectoryHandle));
+			//directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(DirectoryHandle));
 			// La top level directory è registrata nel primo inode
 			// Ottengo il primo inode e da lì ottengo l'indice del blocco che contiene
 			// il FirstDirectoryBlock
@@ -38,14 +40,14 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 				if ( read(disk->fd, inode, sizeof(Inode)) > 0 )
 				{
 					// Dall'inode ottengo l'indice del blocco contenente il FirstDirectoryBlock
-					fs->dcb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
-					if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(disk->header->inodemap_blocks*32)) != -1 )
+					directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
+					if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(disk->header->inodemap_blocks*32), SEEK_SET) != -1 )
 					{
 						// Leggo il first directory block
-						if ( read(disk->fd, fs->dcb, sizeof(FirstDirectoryBlock)) > 0 )
+						if ( read(disk->fd, directoryHandle->dcb, sizeof(FirstDirectoryBlock)) > 0 )
 						{
 							// Setto i restanti campi della directory handle
-							directoryHandle->current_block = fs->dcb->header;
+							directoryHandle->current_block = &(directoryHandle->dcb->header); // Sono nel primo blocco
 							free(inode);
 						}
 						else
@@ -105,18 +107,18 @@ void SimpleFS_format(SimpleFS* fs)
 		// Scrittura dell'inode su file
 		if ( lseek(fs->disk->fd, BLOCK_SIZE+fs->disk->header->bitmap_bytes+fs->disk->header->inodemap_bytes, SEEK_SET) != -1 )
 		{
-			if ( write(fs->disk->fd, inode, sizeof(Inode) > 0 )
+			if ( write(fs->disk->fd, inode, sizeof(Inode)) > 0 )
 			{
 				// Setto l'indice dell'inode contenente le informazioni della cartella principale
 				fs->current_directory_inode = 0;
 				// Creazione blocco data per la cartella principale (root)
 				firstDirectoryBlock = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
-				firstDirectoryBlock->header->block_in_file = 0;
-				firstDirectoryBlock->header->next_block = -1; // Non ci sono né blocchi precedenti né successivi, in quanto appena creato
-				firstDirectoryBlock->header->previous_block = -1;
-				strcpy(firstDirectoryBlock->fcb->name, "/");
-				firstDirectoryBlock->fcb->block_in_disk = 0;
-				firstDirectoryBlock->fcb->directory_block = -1; // Cartella principale, no parent
+				firstDirectoryBlock->header.block_in_file = 0;
+				firstDirectoryBlock->header.next_block = -1; // Non ci sono né blocchi precedenti né successivi, in quanto appena creato
+				firstDirectoryBlock->header.previous_block = -1;
+				strcpy(firstDirectoryBlock->fcb.name, "/");
+				firstDirectoryBlock->fcb.block_in_disk = 0;
+				firstDirectoryBlock->fcb.directory_block = -1; // Cartella principale, no parent
 				firstDirectoryBlock->num_entries = 0;
 				// Inizializzazione array della cartella per indicare gli inode figli contenenti in essa
 				int dim = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
