@@ -118,6 +118,11 @@ int main(int agc, char** argv) {
 	bits_print(dd->bitmap_data_values, 10);
 	printf("Bitmap inode: \n");
 	bits_print(dd->bitmap_inode_values, 10);
+
+	char* sread=malloc(sizeof(BLOCK_SIZE));
+	printf("call read:%d\n",DiskDriver_readBlock(dd,sread,1));
+	printf("readed: %s\n",sread);
+
 	printf("--DISKDRIVER END--\n");
 
 	//-------------------SIMPLE_FS TESTING-----------------------------------
