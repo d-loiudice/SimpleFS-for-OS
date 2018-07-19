@@ -83,7 +83,7 @@ int main(int agc, char** argv) {
 	r1=BitMap_get( bmap, 270, 1);
 	printf("get %d \n ",r1);
 
-	r1=BitMap_get( bmap, 2, 1);
+	r1=BitMap_get( bmap, 0, 1);
 	printf("get %d \n ",r1);
 
 	BitMapEntryKey k = BitMap_blockToIndex(3);
@@ -120,11 +120,28 @@ int main(int agc, char** argv) {
 	printf("Bitmap inode: \n");
 	bits_print(dd->bitmap_inode_values, 10);
 	
-	printf("call write on 3: %d \n", DiskDriver_writeBlock(dd,"test_sample",3) ); 
+	BitMap* bm2=malloc(sizeof(BitMap));
+	bm2->entries= dd->bitmap_data_values;
+	bm2->num_bits= dd->header->bitmap_bytes*8;
+	BitMap_set(bm2,2,1);
+	memcpy(dd->bitmap_data_values,bm2->entries,256);
+	
+		int i,j;
+	for(i=0;i< 5;i++){
+		for(j=0;j<8;j++) bit_set(bm2->entries[i],j);
+		j=0; 
+		}
+	memcpy(dd->bitmap_data_values,bm2->entries,256);
+
+	bits_print(dd->bitmap_data_values,10);
+	
+	
+	printf("call write on 2: %d \n", DiskDriver_writeBlock(dd,"lorem ipsum",2) ); 
 
 	char* sread=malloc(sizeof(BLOCK_SIZE));
-	printf("call read on 1:%d\n",DiskDriver_readBlock(dd,sread,1));
+	printf("call read on 1: %d\n",DiskDriver_readBlock(dd,sread,2));
 	printf("readed: %s\n",sread);
+	//free(sread);
 	char* blockw = malloc(sizeof(BLOCK_SIZE));
 	
 	printf("Test freeBlock() e getFreeBlock()\n");

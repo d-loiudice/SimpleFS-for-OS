@@ -183,7 +183,7 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	
 	
-	block_num= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
+	block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
 	char* bm=disk->bitmap_data_values;
 	
 	BitMapEntryKey k=BitMap_blockToIndex(block_num);
@@ -194,7 +194,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 		return -1;
 	}
 
-	void* blockRead=(void*) malloc(BLOCK_SIZE);
+	char* blockRead=(char*) malloc(sizeof(char)*BLOCK_SIZE);
 	//move in the file till block num reached
 	if(lseek(disk->fd, block_num*BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
@@ -208,7 +208,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	}
 	
 	memcpy(dest, blockRead, BLOCK_SIZE);
-	free(blockRead);
+	//cannot free block read why?
 	return 0;
 }
 
@@ -225,7 +225,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	return 0;
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
-	block_num= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
+	block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
 	char* bm= disk->bitmap_data_values;
 	BitMapEntryKey k= BitMap_blockToIndex(block_num);
 

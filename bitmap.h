@@ -5,15 +5,15 @@
 #include <string.h>
 /*	BIT MATH OPERATIONS MACRO */
 //get the bit in i position of c
-#define bit_get(c,i) ((c) & (1<<(i) ))	
+#define bit_get(c,i) ((c) & (1<<(7-i) ))	
 //set the bit in i position of clear  
-#define bit_set(c,i) ((c) |= (1<<(i) ))	
+#define bit_set(c,i) ((c) |= (1<<(7-i) ))	
 //clear the bit in i position of c 
-#define bit_clear(c,i) ((c) &= ~(1<<(i) ))	
+#define bit_clear(c,i) ((c) &= ~(1<<(7-i) ))	
 //flip the bit in i position of c
-#define bit_flip(c,i) ((c) ^= (1<<(i) ))	
+#define bit_flip(c,i) ((c) ^= (1<<(7-i) ))	
 //check if the bit in i of c is one (1) or zero (0)
-#define bit_is_one(c,i) (( (c) & (1<<(i) ) )> 0)
+#define bit_is_one(c,i) (( (c) & (1<<(7-i) ) )> 0)
 
 
 typedef struct{
