@@ -205,9 +205,13 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	return 0;
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
-
-
-	return -1;
+	int ret = -1;
+	// Verifica che l'indice del blocco dove scrivere esista
+	if ( block_num < disk->header->bitmap_blocks ) 
+	{
+		lseek(disk->fd, 3+(block_num*
+	}
+	return ret;
 }
 
 // frees a block in position block_num, and alters the bitmap accordingly
