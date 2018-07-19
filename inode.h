@@ -28,7 +28,8 @@ typedef struct
 	char tipoFile;
 	// Indice del primo blocco del file (LINKED LIST BLOCKS)
 	unsigned int primoBlocco;
-
+	// Padding per raggiungere i 32byte
+	char padding[6];
 	/// NO NEED: non avevo lette le specifiche
 	// Gestione dell'indirizzamento ai blocchi contenente il contenuto del file
 	// Per ora massima dimensione del file possibile con questi puntatori = 1GB ( circa 1 082 202 112 bytes )

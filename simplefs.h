@@ -1,5 +1,6 @@
 #pragma once
 #include "bitmap.h"
+#include "inode.h"
 #include "disk_driver.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +48,7 @@ typedef struct {
   BlockHeader header;
   FileControlBlock fcb;
   int num_entries;
-  int file_blocks[ (BLOCK_SIZE
+  int file_inodes[ (BLOCK_SIZE
 		   -sizeof(BlockHeader)
 		   -sizeof(FileControlBlock)
 		    -sizeof(int))/sizeof(int) ];
@@ -56,7 +57,7 @@ typedef struct {
 // this is remainder block of a directory
 typedef struct {
   BlockHeader header;
-  int file_blocks[ (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int) ];
+  int file_inodes[ (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int) ];
 } DirectoryBlock;
 /******************* stuff on disk END *******************/
 
@@ -67,6 +68,7 @@ typedef struct {
 typedef struct {
   DiskDriver* disk;
   // add more fields if needed
+  int current_directory_inode;
 } SimpleFS;
 
 // this is a file handle, used to refer to open files
@@ -81,7 +83,7 @@ typedef struct {
 typedef struct {
   SimpleFS* sfs;                   // pointer to memory file system structure
   FirstDirectoryBlock* dcb;        // pointer to the first block of the directory(read it)
-  FirstDirectoryBlock* directory;  // pointer to the parent directory (null if top level)
+  FirstDirectoryBlock* parent; 	   // pointer to the parent directory (null if top level)
   BlockHeader* current_block;      // current block in the directory
   int pos_in_dir;                  // absolute position of the cursor in the directory
   int pos_in_block;                // relative position of the cursor in the block
@@ -90,6 +92,7 @@ typedef struct {
 // initializes a file system on an already made disk
 // returns a handle to the top level directory stored in the first block
 DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk);
+
 
 // creates the inital structures, the top level directory
 // has name "/" and its control block is in the first position
@@ -132,7 +135,7 @@ int SimpleFS_seek(FileHandle* f, int pos);
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
 // it does side effect on the provided handle
- int SimpleFS_changeDir(DirectoryHandle* d, char* dirname);
+int SimpleFS_changeDir(DirectoryHandle* d, char* dirname);
 
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
