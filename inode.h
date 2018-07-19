@@ -1,7 +1,7 @@
 #pragma once
 // Libreria per accesso standardizzato alle funzioni di acquisizione e manipolazione del tempo 
 #include <time.h>
-// Dimensione totale della struttura = 1+1+1+1+1+4+4+4+4+1+4 = 31 -> sarebbe bello che fosse un divisore di 512, almeno non si spreca spazio nei blocchi
+// Dimensione totale della struttura = 1+1+1+1+1+4+4+4+4+1+4 = 26 -> sarebbe bello che fosse un divisore di 512, almeno non si spreca spazio nei blocchi
 typedef struct
 {
 	// unsigned char == uint8_t, per memorizzare byte / piccoli valori ( sizeof(unsigned char) = 1 )

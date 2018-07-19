@@ -9,6 +9,7 @@
 #include <errno.h>
 
 #include "disk_driver.h"
+#include "inode.h"
 
 #define ERROR -1
 #define NUM_SUPER 1
@@ -20,31 +21,6 @@
 int fp=-1;
 int PageSize; 
 
-/*static DiskDriver* createMMAP(void* addr,size_t size, int mfd){
-	
-	
-	int protections=PROT_READ | PROT_WRITE;
-	int flags = MAP_SHARED | MAP_ANONYMOUS;
-	off_t offset=0;
-
-	DiskDriver* state = mmap(addr,size,protections,
-		flags, mfd, offset);
-
-	if(state==MAP_FAILED){
-		perror("errore in mmap");
-		exit(1);
-	}
-
-	return state;
-}*/
-
-/*static void deleteMMAP(void* addr){
-
-	if (ERROR == munmap(addr,sizeof(DiskDriver) )){
-		perror("errore in unmap di deleteMMAP");
-		exit(1);
-	}
-}*/
 
 //LAVORO PER SINGOLO FILE (un file creato-scritto/letto-chiuso)TODO DA AMPLIARE
 
@@ -55,6 +31,36 @@ int PageSize;
 // if the file was new
 // compiles a disk header, and fills in the bitmap of appropriate size
 // with all 0 (to denote the free space);
+Inode Inode_init(void){
+	Inode inode;
+	inode.permessiUtente=0;
+	// Permessi del gruppo a cui appartiene il file, valori possibili da 0 a (rwx)
+	inode.permessiGruppo=0;
+	// Permessi agli altri (rwx) da 0 a 7
+	inode.permessiAltri=0;
+	// La lista degli utenti si potrebbe registrare su un file nel filesystem ( es. users.pippo )
+	// Id dell'utente a cui appartiene il file
+	inode.idUtente=0;
+	// Id del gruppo 
+	inode.idGruppo=0;
+	// Data creazione del file
+	inode.dataCreazione= time(NULL);
+	// Data ultima modifica del file
+	inode.dataUltimaModifica = time(NULL);
+	// Dimensione del file ( in bytes ) massimo valore 4GB più o meno essendo long int = 32bit
+	inode.dimensioneFile=0;
+	// Dimensione in blocchi (quanti blocchi occupa il file descritto da questo inode)
+	inode.dimensioneInBlocchi=0;
+	// Tipo di file ( 'r' = file regolare, 'd' = directory,'u' = unknown yet ecc...,  )
+	inode.tipoFile='u';
+	// Indice del primo blocco del file (LINKED LIST BLOCKS)
+	inode.primoBlocco=0;
+	
+	return inode;
+	
+	}
+
+
 void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_blocks){
 	int fd;
 	DiskHeader* nuovoDiskHeader;
@@ -148,7 +154,7 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 				fprintf(stderr, "FD: %d\n", fd);
 				fprintf(stderr, "FD in diskdriver: %d\n", fd);
 				// Copio il nuovo DiskHeader creato prima
-				memcpy(diskDriver->header, nuovoDiskHeader, sizeof(DiskHeader));
+				memcpy(diskDriver->header, nuovoDiskHeader, sizeof(DiskHeader)); //????
 				DiskDriver_flush(diskDriver);
 			}
 			else
@@ -220,7 +226,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
 	block_num= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
-	char* bm=disk->bitmap_data_values;
+	char* bm= disk->bitmap_data_values;
 	BitMapEntryKey k= BitMap_blockToIndex(block_num);
 
 	//TODO modify the bitmap
@@ -229,7 +235,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 		return -1;
 	}
 	
-	if(lseek(disk->fd, block_num*BLOCK_SIZE, SEEK_SET) < 0 ){
+	if(lseek(disk->fd, block_num * BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
 		exit(1);
 	}

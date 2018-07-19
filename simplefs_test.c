@@ -75,7 +75,7 @@ int main(int agc, char** argv) {
 	r1= BitMap_set(bmap, 270, 1);
 	printf("set %d \n ",r1);
 
-	r1= BitMap_set(bmap, 20, 1);
+	r1= BitMap_set(bmap, 2, 1);
 	printf("set %d \n ",r1);
 
 	bits_print(bmap->entries,10);
@@ -119,9 +119,11 @@ int main(int agc, char** argv) {
 	bits_print(dd->bitmap_data_values, 10);
 	printf("Bitmap inode: \n");
 	bits_print(dd->bitmap_inode_values, 10);
+	
+	printf("call write on 3: %d \n", DiskDriver_writeBlock(dd,"test_sample",3) ); 
 
 	char* sread=malloc(sizeof(BLOCK_SIZE));
-	printf("call read:%d\n",DiskDriver_readBlock(dd,sread,1));
+	printf("call read on 1:%d\n",DiskDriver_readBlock(dd,sread,1));
 	printf("readed: %s\n",sread);
 	char* blockw = malloc(sizeof(BLOCK_SIZE));
 	
