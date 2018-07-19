@@ -154,7 +154,7 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 				fprintf(stderr, "FD: %d\n", fd);
 				fprintf(stderr, "FD in diskdriver: %d\n", fd);
 				// Copio il nuovo DiskHeader creato prima
-				memcpy(diskDriver->header, nuovoDiskHeader, sizeof(DiskHeader)); //????
+				memcpy(diskDriver->header, nuovoDiskHeader, sizeof(DiskHeader)); //???? -> scrivo il diskheader creato prima nella zona mmappata e successivamente flush
 				DiskDriver_flush(diskDriver);
 			}
 			else
