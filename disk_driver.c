@@ -244,10 +244,66 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 
 // frees a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
-int DiskDriver_freeBlock(DiskDriver* disk, int block_num);
+int DiskDriver_freeBlock(DiskDriver* disk, int block_num)
+{
+	int ret = -1;
+	BitMapEntryKey k;
+	BitMap* bitmap;
+	
+	// Verifica che il blocco da liberare esista	
+	if ( block_num < disk->header->bitmap_blocks )
+	{
+		//k = BitMap_blockToIndex(block_num);
+		// Setto nella bitmap che il blocco nel dato indice è libero
+		bitmap = malloc(sizeof(BitMap));
+		bitmap->num_bits = disk->header->bitmap_blocks;
+		bitmap->entries = disk->bitmap_data_values;
+		if ( BitMap_set(bitmap, block_num, 0) != -1 )
+		{
+			// Modifico le informazioni relative ai blocchi data liberi 
+			// memorizzati nel DiskHeader 
+			disk->header->dataFree_blocks = disk->header->dataFree_blocks + 1;
+			if ( block_num < disk->header->dataFirst_free_block ) 
+			{
+				disk->header->dataFirst_free_block = block_num;
+			}	
+			// Ritorno valore diverso da -1 	
+			ret = 0;
+		}
+		// Libero la struttura allocata dinamicamente usata
+		free(bitmap);
+	}
+	
+	return ret;
+}
 
-// returns the first free blockin the disk from position (checking the bitmap)
-int DiskDriver_getFreeBlock(DiskDriver* disk, int start);
+// returns the first free block in the disk from position (checking the bitmap)
+int DiskDriver_getFreeBlock(DiskDriver* disk, int start)
+{
+	int index;
+	BitMap* bitmap;
+	// Se la posizione di partenza è fuori range oppure non ci sono blocchi liberi...
+	if ( start < 0 || start > disk->header->bitmap_blocks || disk->header->dataFree_blocks == 0 )
+	{
+		// ... errore -1
+		index = -1;
+	}
+	// Se si vuole il primo blocco data libero...
+	else if ( start == 0 )
+	{
+		// ...Lo si ottiene dal DiskHeader
+		index = disk->header->dataFirst_free_block;
+	}
+	else
+	{
+		// Altrimenti ricerca nella bitmap 
+		bitmap = (BitMap*)malloc(sizeof(BitMap));
+		index = BitMap_get(bitmap, start, 0);
+		free(bitmap);
+	}
+	
+	return index;
+}
 
 // writes the data (flushing the mmaps)
 // Returns -1 if operation not possible, 0 if successfull

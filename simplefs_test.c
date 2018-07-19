@@ -104,6 +104,7 @@ int main(int agc, char** argv) {
 	DiskDriver* dd = (DiskDriver*) malloc(sizeof(DiskDriver));
 	DiskDriver_init(dd,"fileTest",50);
 	printf("--DISKHEADER--\n");
+	printf("Test done on an expected new file, please delete the file created after each run\n");
 	printf("File descriptor: %d\n", dd->fd);
 	printf("Numero blocchi totali: %d\n", dd->header->num_blocks);
 	printf("Numero blocchi mappati dalla bitmap_data: %d\n", dd->header->bitmap_blocks);
@@ -122,7 +123,19 @@ int main(int agc, char** argv) {
 	char* sread=malloc(sizeof(BLOCK_SIZE));
 	printf("call read:%d\n",DiskDriver_readBlock(dd,sread,1));
 	printf("readed: %s\n",sread);
-
+	char* blockw = malloc(sizeof(BLOCK_SIZE));
+	
+	printf("Test freeBlock() e getFreeBlock()\n");
+	BitMap* bitmapTest = (BitMap*)malloc(sizeof(BitMap));
+	bitmapTest->num_bits = dd->header->bitmap_blocks;
+	bitmapTest->entries = dd->bitmap_data_values;
+	printf("Set data block in index 0 to 1 (value expected 1)=> %d\n", BitMap_set(bitmapTest, 0, 1));
+	printf("Get first free data block (value expected 1) => %d\n", DiskDriver_getFreeBlock(dd, 0));
+	printf("Free data block in index 0 (value expected 0) => %d\n", DiskDriver_freeBlock(dd, 0));
+	printf("Free data block in index out of range (value expected -1) => %d\n", DiskDriver_freeBlock(dd, 113133));
+	printf("Get first free data block (value expected 0) => %d\n", DiskDriver_getFreeBlock(dd, 0));
+	
+	
 	printf("--DISKDRIVER END--\n");
 
 	//-------------------SIMPLE_FS TESTING-----------------------------------
