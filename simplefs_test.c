@@ -171,9 +171,10 @@ int main(int agc, char** argv) {
 	printf("And then init the filesystem\n");
 	DirectoryHandle* toplevel = SimpleFS_init(fileSystem, dd);
 	printf("Directory Handle toplevel\n");
-	printf("Number entities: %d\n", toplevel->dcb->num_entries);
-	printf("Name of folder: %s\n", toplevel->dcb->fcb.name);
+	printf("Number entities: %d\n", toplevel->fdb->num_entries);
+	printf("Name of folder: %s\n", toplevel->fdb->fcb.name);
+	printf("Create new file called pippo.txt\n");
+	SimpleFS_createFile(toplevel, "pippo.txt");
 	
-
  // #endif
 }

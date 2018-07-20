@@ -230,10 +230,10 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	BitMapEntryKey k= BitMap_blockToIndex(block_num);
 
 	//TODO modify the bitmap
-	if( bit_get(bm[k.entry_num],k.bit_num)==0 ){	//intere block (8 celle) all zeros
+	/*if( bit_get(bm[k.entry_num],k.bit_num)==0 ){	//intere block (8 celle) all zeros
 		perror("cannot write cause block not allocated");
 		return -1;
-	}
+	}*/
 	
 	if(lseek(disk->fd, block_num * BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
@@ -257,25 +257,34 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num)
 	BitMap* bitmap;
 	
 	// Verifica che il blocco da liberare esista	
-	if ( block_num < disk->header->bitmap_blocks )
+	if ( block_num >= 0 && block_num < disk->header->bitmap_blocks )
 	{
 		//k = BitMap_blockToIndex(block_num);
 		// Setto nella bitmap che il blocco nel dato indice è libero
 		bitmap = malloc(sizeof(BitMap));
 		bitmap->num_bits = disk->header->bitmap_blocks;
 		bitmap->entries = disk->bitmap_data_values;
-		if ( BitMap_set(bitmap, block_num, 0) != -1 )
+		// Verifico che non sia già libero il blocco da liberare
+		if ( BitMap_get(bitmap, block_num, 0) != block_num )
 		{
-			// Modifico le informazioni relative ai blocchi data liberi 
-			// memorizzati nel DiskHeader 
-			disk->header->dataFree_blocks = disk->header->dataFree_blocks + 1;
-			if ( block_num < disk->header->dataFirst_free_block ) 
+			if ( BitMap_set(bitmap, block_num, 0) != -1 )
 			{
-				disk->header->dataFirst_free_block = block_num;
-			}	
-			// Ritorno valore diverso da -1 	
+				// Modifico le informazioni relative ai blocchi data liberi 
+				// memorizzati nel DiskHeader 
+				disk->header->dataFree_blocks = disk->header->dataFree_blocks + 1;
+				if ( block_num < disk->header->dataFirst_free_block ) 
+				{
+					disk->header->dataFirst_free_block = block_num;
+				}	
+				// Ritorno valore diverso da -1 	
+				ret = 0;
+			}
+		}
+		else
+		{
 			ret = 0;
 		}
+		
 		// Libero la struttura allocata dinamicamente usata
 		free(bitmap);
 	}

@@ -17,7 +17,8 @@ typedef struct {
 
 // this is in the first block of a chain, after the header
 typedef struct {
-  int directory_block; // first block of the parent directory
+  //int directory_block; // first block of the parent directory
+  int parent_inode; // inode of parent directory
   int block_in_disk;   // repeated position of the block on the disk
   char name[128];
   //int  size_in_bytes; è nell'inode
@@ -74,16 +75,20 @@ typedef struct {
 // this is a file handle, used to refer to open files
 typedef struct {
   SimpleFS* sfs;                   // pointer to memory file system structure
-  FirstFileBlock* fcb;             // pointer to the first block of the file(read it)
-  FirstDirectoryBlock* directory;  // pointer to the directory where the file is stored
+  FirstFileBlock* ffb;             // pointer to the first block of the file(read it)
+  //FirstDirectoryBlock* directory;  // pointer to the directory where the file is stored
+  //int parent_inode; 			   // index to inode parent directory (-1 if top level) ----> Messa nel FileControlBlock quindi in fdb->fcb.parent_inode
+  int inode;					   // index to inode of this file
   BlockHeader* current_block;      // current block in the file
   int pos_in_file;                 // position of the cursor
 } FileHandle;
 
 typedef struct {
   SimpleFS* sfs;                   // pointer to memory file system structure
-  FirstDirectoryBlock* dcb;        // pointer to the first block of the directory(read it)
-  FirstDirectoryBlock* parent; 	   // pointer to the parent directory (null if top level)
+  FirstDirectoryBlock* fdb;        // pointer to the first block of the directory(read it)
+  //FirstDirectoryBlock* parent; 	   // pointer to the parent directory (null if top level)
+  //int parent_inode; 			   // index to inode parent directory (-1 if top level) ----> Messa nel FileControlBlock quindi in fdb->fcb.parent_inode
+  int inode; 					   // index to inode of this directory
   BlockHeader* current_block;      // current block in the directory
   int pos_in_dir;                  // absolute position of the cursor in the directory
   int pos_in_block;                // relative position of the cursor in the block

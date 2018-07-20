@@ -35,18 +35,19 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 			directoryHandle->sfs = fs;
 			directoryHandle->pos_in_dir = 0;
 			directoryHandle->pos_in_block = 0; 
-			directoryHandle->parent = NULL;
+			//directoryHandle->parent_inode = -1;
+			directoryHandle->inode = 0;
 			//directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(DirectoryHandle));
 			// La top level directory è registrata nel primo inode
 			// Ottengo il primo inode e da lì ottengo l'indice del blocco che contiene
 			// il FirstDirectoryBlock
 			// Dall'inode ottengo l'indice del blocco contenente il FirstDirectoryBlock
-			directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
+			directoryHandle->fdb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
 			// L'indice del blocco data contenente i dati è nell'inode
-			if ( DiskDriver_readBlock(disk, (void*)directoryHandle->dcb, inode->primoBlocco) != -1 )
+			if ( DiskDriver_readBlock(disk, (void*)directoryHandle->fdb, inode->primoBlocco) != -1 )
 			{
 				// Setto i restanti campi della directory handle
-				directoryHandle->current_block = &(directoryHandle->dcb->header); // Sono nel primo blocco
+				directoryHandle->current_block = &(directoryHandle->fdb->header); // Sono nel primo blocco
 			}
 			free(inode);
 		}
@@ -87,6 +88,7 @@ void SimpleFS_format(SimpleFS* fs)
 		inode->idUtente = 0;
 		inode->idGruppo = 0;
 		inode->dataCreazione = time(NULL);
+		inode->dataUltimoAccesso = inode->dataCreazione;
 		inode->dataUltimaModifica = inode->dataCreazione; // E' stato creato ora quindi sono uguali
 		inode->dimensioneFile = 4096; // cartella
 		inode->dimensioneInBlocchi = 1;
@@ -105,7 +107,8 @@ void SimpleFS_format(SimpleFS* fs)
 			firstDirectoryBlock->header.previous_block = -1;
 			strcpy(firstDirectoryBlock->fcb.name, "/");
 			firstDirectoryBlock->fcb.block_in_disk = 0;
-			firstDirectoryBlock->fcb.directory_block = -1; // Cartella principale, no parent
+			//firstDirectoryBlock->fcb.directory_block = -1; // Cartella principale, no parent
+			firstDirectoryBlock->fcb.parent_inode = -1;
 			firstDirectoryBlock->num_entries = 0;
 			// Inizializzazione array della cartella per indicare gli inode figli contenenti in essa
 			int dim = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
@@ -139,8 +142,82 @@ void SimpleFS_format(SimpleFS* fs)
 // creates an empty file in the directory d
 // returns null on error (file existing, no free blocks inodes and datas)
 // an empty file consists only of a block of type FirstBlock
-FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename);
-
+FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
+{
+	FileHandle* fileHandle = NULL;
+	BitMap* bitmapInode;
+	BitMap* bitmapData;
+	FirstFileBlock* firstFileBlock;
+	Inode* inode;
+	int indexInode;
+	int indexData;
+	bitmapInode = (BitMap*)malloc(sizeof(BitMap));
+	bitmapData = (BitMap*)malloc(sizeof(BitMap));
+	bitmapInode->num_bits = d->sfs->disk->header->inodemap_blocks;
+	bitmapInode->entries = d->sfs->disk->bitmap_inode_values;
+	bitmapData->num_bits = d->sfs->disk->header->bitmap_blocks;
+	bitmapData->entries = d->sfs->disk->bitmap_data_values;
+	// Verifica che ci sia un inode libero
+	if ( d->sfs->disk->header->inodeFree_blocks > 0 )
+	{
+		indexInode = d->sfs->disk->header->inodeFirst_free_block;
+		// Verifica che ci sia un blocco data libero
+		if ( d->sfs->disk->header->dataFree_blocks > 0 )
+		{
+			// Ottengo il blocco data dove andrò a memorizzare il file
+			indexData = d->sfs->disk->header->dataFirst_free_block;
+			
+			// Inizializzazione inode
+			inode = (Inode*)malloc(sizeof(Inode));
+			inode->permessiAltri = 7;
+			inode->permessiUtente = 7;
+			inode->permessiGruppo = 7;
+			inode->idUtente = 0;
+			inode->idGruppo = 0;
+			inode->dataCreazione = time(NULL);
+			inode->dataUltimoAccesso = inode->dataCreazione;
+			inode->dataUltimaModifica = inode->dataCreazione;
+			inode->dimensioneFile = 0;
+			inode->dimensioneInBlocchi = 1;
+			inode->tipoFile = 'r';
+			inode->primoBlocco = indexData;
+			
+			// Inizializzazione FirstFileBlock
+			firstFileBlock = (FirstFileBlock*)malloc(sizeof(FirstFileBlock));
+			// BlockHeader
+			firstFileBlock->header.block_in_file = 0;
+			firstFileBlock->header.next_block = -1;
+			firstFileBlock->header.previous_block = -1;
+			// FCB
+			firstFileBlock->fcb.parent_inode = d->inode;
+			firstFileBlock->fcb.block_in_disk = indexData;
+			strncpy(firstFileBlock->fcb.name, filename, 128);
+			memset(firstFileBlock->data, 0, BLOCK_SIZE-sizeof(FileControlBlock) - sizeof(BlockHeader));
+			
+			// Scrittura delle strutture dati
+			if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode) != -1 ) 
+			{
+				if ( DiskDriver_writeBlock(d->sfs->disk, (void*)firstFileBlock, indexData) != -1 )
+				{
+					// OK
+					fileHandle = (FileHandle*) malloc(sizeof(FileHandle));
+					fileHandle->sfs = d->sfs;
+					fileHandle->ffb = firstFileBlock;
+					//fileHandle->parent_inode = 
+					fileHandle->inode = indexInode;
+					fileHandle->current_block = &(firstFileBlock->header);
+					fileHandle->pos_in_file  = 0;
+				}
+			}
+			else
+			{
+				fprintf(stderr, "Errore durante la scrittura dell'inode\n");
+			}
+		}
+	}
+	
+	return fileHandle;
+}
 // reads in the (preallocated) blocks array, the name of all files in a directory 
 int SimpleFS_readDir(char** names, DirectoryHandle* d);
 

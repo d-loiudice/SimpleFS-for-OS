@@ -1,7 +1,7 @@
 #pragma once
 // Libreria per accesso standardizzato alle funzioni di acquisizione e manipolazione del tempo 
 #include <time.h>
-// Dimensione totale della struttura = 1+1+1+1+1+4+4+4+4+1+4 = 26 -> sarebbe bello che fosse un divisore di 512, almeno non si spreca spazio nei blocchi
+// Dimensione totale della struttura = 1+1+1+1+1+4+4+4+4+1+4 = 30+2padding -> sarebbe bello che fosse un divisore di 512, almeno non si spreca spazio nei blocchi
 typedef struct
 {
 	// unsigned char == uint8_t, per memorizzare byte / piccoli valori ( sizeof(unsigned char) = 1 )
@@ -18,6 +18,8 @@ typedef struct
 	unsigned char idGruppo;
 	// Data creazione del file
 	time_t dataCreazione;
+	// Data ultimo accesso
+	time_t dataUltimoAccesso;
 	// Data ultima modifica del file
 	time_t dataUltimaModifica;
 	// Dimensione del file ( in bytes ) massimo valore 4GB più o meno essendo long int = 32bit
@@ -29,7 +31,7 @@ typedef struct
 	// Indice del primo blocco del file (LINKED LIST BLOCKS)
 	unsigned int primoBlocco;
 	// Padding per raggiungere i 32byte
-	char padding[6];
+	char padding[2];
 	/// NO NEED: non avevo lette le specifiche
 	// Gestione dell'indirizzamento ai blocchi contenente il contenuto del file
 	// Per ora massima dimensione del file possibile con questi puntatori = 1GB ( circa 1 082 202 112 bytes )
