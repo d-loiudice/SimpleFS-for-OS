@@ -164,8 +164,15 @@ int main(int agc, char** argv) {
 	printf("DataBlock size %ld\n", sizeof(FileBlock));
 	printf("FirstDirectoryBlock size %ld\n", sizeof(FirstDirectoryBlock));
 	printf("DirectoryBlock size %ld\n", sizeof(DirectoryBlock));
-
-
+	SimpleFS* fileSystem = (SimpleFS*) malloc(sizeof(SimpleFS));
+	fileSystem->disk = dd;
+	printf("Format the disk\n");
+	SimpleFS_format(fileSystem);
+	printf("And then init the filesystem\n");
+	DirectoryHandle* toplevel = SimpleFS_init(fileSystem, dd);
+	printf("Directory Handle toplevel\n");
+	printf("Number entities: %d\n", toplevel->dcb->num_entries);
+	printf("Name of folder: %s\n", toplevel->dcb->fcb.name);
 	
 
  // #endif
