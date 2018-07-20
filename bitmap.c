@@ -110,7 +110,7 @@ BitMap BitMap_init(void){
 	bmap.entries=arr;
 	return bmap;
 }
-
+/*
 // converts a block index to an index in the array,
 // and a char that indicates the offset of the bit inside the array
 BitMapEntryKey BitMapInode_blockToIndex(int num){
@@ -178,7 +178,7 @@ int BitMapInode_set(BitMap* bmap, int pos, int status){
 		}
 	}
 	*/
-
+/*
 	if(status==1)
 		bit_set(bmap->entries[k.entry_num],k.bit_num);
 	else
@@ -186,4 +186,4 @@ int BitMapInode_set(BitMap* bmap, int pos, int status){
 
 	return status;
 }
-
+*/

@@ -19,8 +19,8 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 		BitMap* bitmapInode = (BitMap*)malloc(sizeof(BitMap));
 		bitmapInode->num_bits = disk->header->inodemap_blocks;
 		bitmapInode->entries = disk->bitmap_inode_values;
-		fprintf(stderr, "Valore ottenuto da BitMapInode_get: %d\n", BitMapInode_get(bitmapInode, 0, 1));
-		if ( BitMapInode_get(bitmapInode, 0, 1) == 0 )
+		fprintf(stderr, "Valore ottenuto da BitMapInode_get: %d\n", BitMap_get(bitmapInode, 0, 1));
+		if ( BitMap_get(bitmapInode, 0, 1) == 0 )
 		{
 			fprintf(stderr, "Il primo inode è occupato\n");
 			fs->disk = disk;
@@ -106,7 +106,7 @@ void SimpleFS_format(SimpleFS* fs)
 		bitmapInode->num_bits = fs->disk->header->inodemap_blocks;
 		bitmapInode->entries = fs->disk->bitmap_inode_values;
 		// Setto occupato il primo inode nella bitmap
-		if ( BitMapInode_set(bitmapInode, 0, 1) == 1 )
+		if ( BitMap_set(bitmapInode, 0, 1) == 1 )
 		{
 			// Creo l'inode per la cartella principale
 			inode = (Inode*) malloc(sizeof(Inode));
