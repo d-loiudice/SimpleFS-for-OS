@@ -31,34 +31,6 @@ int PageSize;
 // if the file was new
 // compiles a disk header, and fills in the bitmap of appropriate size
 // with all 0 (to denote the free space);
-Inode Inode_init(void){
-	Inode inode;
-	inode.permessiUtente=0;
-	// Permessi del gruppo a cui appartiene il file, valori possibili da 0 a (rwx)
-	inode.permessiGruppo=0;
-	// Permessi agli altri (rwx) da 0 a 7
-	inode.permessiAltri=0;
-	// La lista degli utenti si potrebbe registrare su un file nel filesystem ( es. users.pippo )
-	// Id dell'utente a cui appartiene il file
-	inode.idUtente=0;
-	// Id del gruppo 
-	inode.idGruppo=0;
-	// Data creazione del file
-	inode.dataCreazione= time(NULL);
-	// Data ultima modifica del file
-	inode.dataUltimaModifica = time(NULL);
-	// Dimensione del file ( in bytes ) massimo valore 4GB più o meno essendo long int = 32bit
-	inode.dimensioneFile=0;
-	// Dimensione in blocchi (quanti blocchi occupa il file descritto da questo inode)
-	inode.dimensioneInBlocchi=0;
-	// Tipo di file ( 'r' = file regolare, 'd' = directory,'u' = unknown yet ecc...,  )
-	inode.tipoFile='u';
-	// Indice del primo blocco del file (LINKED LIST BLOCKS)
-	inode.primoBlocco=0;
-	
-	return inode;
-	
-	}
 
 
 void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_blocks){
@@ -198,13 +170,13 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	//move in the file till block num reached
 	if(lseek(disk->fd, block_num*BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
-		exit(1);
+		return -1;
 	}
 	
 	//TODO last accessed in inode has to be updated
 	if(read(disk->fd, blockRead, BLOCK_SIZE) < 0 ){
 		perror("ERR:");
-		exit(1);
+		return -1;
 	}
 	
 	memcpy(dest, blockRead, BLOCK_SIZE);
@@ -226,25 +198,36 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
 	block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
-	char* bm= disk->bitmap_data_values;
-	BitMapEntryKey k= BitMap_blockToIndex(block_num);
+	
+	BitMap* bm = (BitMap*)malloc(sizeof(BitMap));
+	bm->num_bits = disk->header->bitmap_blocks;
+	bm->entries = disk->bitmap_data_values;
 
-	//TODO modify the bitmap
-	/*if( bit_get(bm[k.entry_num],k.bit_num)==0 ){	//intere block (8 celle) all zeros
-		perror("cannot write cause block not allocated");
+	if ( BitMap_get(bm, block_num, 0) != block_num ){
+		perror("block num in bitmap is already 1");
 		return -1;
-	}*/
+		}
 	
 	if(lseek(disk->fd, block_num * BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
-		exit(1);
+		return -1;
 	}
 	
 	//TODO last accessed in inode has to be updated
 	if(write(disk->fd, src, BLOCK_SIZE) < 0 ){
 		perror("ERR:");
-		exit(1);
+		return -1;
 	}
+		
+	BitMap_set(bm,block_num,1);
+	disk->header->dataFirst_free_block=BitMap_get(bm,0,0);
+	
+	if( disk->header->dataFree_blocks-- < 0 ){
+		perror("data free blocks got negative");
+		return -1;
+	}
+	
+	free(bm);
 	return 0;
 }
 
