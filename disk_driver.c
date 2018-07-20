@@ -415,7 +415,7 @@ int DiskDriver_getFreeInode(DiskDriver* disk, int start)
 	int ret;
 	BitMap* bitmapInode;
 	// Verifica che l'indice dell'inode esista
-	if ( start > 0 && start < disk->header->inodemap_blocks ) 
+	if ( start >= 0 && start < disk->header->inodemap_blocks ) 
 	{
 		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
 		bitmapInode->num_bits = disk->header->inodemap_blocks;
