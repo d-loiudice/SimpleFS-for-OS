@@ -55,5 +55,21 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num);
 // returns the first free blockin the disk from position (checking the bitmap)
 int DiskDriver_getFreeBlock(DiskDriver* disk, int start);
 
+// Inodes handle function
+// Reads the inode in position block_num
+// returns -1 if the inode i s free according to bitmap, 0 otherwise
+int DiskDriver_readInode(DiskDriver* disk, void* dest, int block_num);
+
+// Writes an inode in position block_num, alters the bitmap
+// -1 if not possible
+int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num);
+
+// Frees an inode in position block_num and alters the bitmap
+// -1 if not possible
+int DiskDriver_freeInode(DiskDriver* disk, int block_num);
+
+// Returns the first free inode in the disk from position checking the bitmap
+int DiskDriver_getFreeInode(DiskDriver* disk, int start);
+
 // writes the data (flushing the mmaps)
 int DiskDriver_flush(DiskDriver* disk);

@@ -325,3 +325,104 @@ int DiskDriver_flush(DiskDriver* disk)
 	return ret;
 }
 
+// Reads the inode in position block_num
+// returns -1 if the inode i s free according to bitmap, 0 otherwise
+int DiskDriver_readInode(DiskDriver* disk, void* dest, int block_num)
+{
+	int ret = -1;
+	BitMap* bitmapInode;
+	// Verifica che l'indice dell'inode esista
+	if ( block_num >= 0 && block_num < disk->header->inodemap_blocks )
+	{
+		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
+		bitmapInode->num_bits = disk->header->inodemap_blocks;
+		bitmapInode->entries = disk->bitmap_inode_values;
+		// Verifica che leggo un inode dove ci sono effettivamente dati
+		if ( BitMap_get(bitmapInode, block_num, 1) == block_num )
+		{
+			// Spostamento nella posizione indicata dall'indice 
+			// Dopo il superblocco e i blocchi necessari per registrare la bitmap dei dati e inodes
+			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(16*block_num), SEEK_SET) != -1 )
+			{
+				// Leggo dal file
+				if ( read(disk->fd, dest, sizeof(Inode)) > 0 )
+				{
+					// OK
+					ret = 0;
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+// Writes an inode in position block_num, alters the bitmap
+// -1 if not possible
+int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
+{
+	int ret = -1;
+	BitMap* bitmapInode;
+	// Verifica che l'indice dell'inode esista
+	if ( block_num >= 0 && block_num < disk->header->inodemap_blocks ) 
+	{
+		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
+		bitmapInode->num_bits = disk->header->inodemap_blocks;
+		bitmapInode->entries = disk->bitmap_inode_values;
+		// Setto che nell'indice indicato l'inode è occupato
+		if ( BitMap_set(bitmapInode, block_num, 1) == 1 )
+		{
+			// Spostamento nella posizione indicata dall'indice
+			// Dopo il superblocco e i blocchi necessari per registrare la bitmap dei dati e inodes
+			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(16*block_num), SEEK_SET) != -1 )
+			{
+				// Scrivo sul file
+				if ( write(disk->fd, src, sizeof(Inode)) > 0 )
+				{
+					// OK
+					ret = 0;
+				}
+			}
+		}
+	}
+	return ret;
+}
+
+// Frees an inode in position block_num and alters the bitmap
+// -1 if not possible
+int DiskDriver_freeInode(DiskDriver* disk, int block_num)
+{
+	int ret = -1;
+	BitMap* bitmapInode;
+	// Verifica che l'indice dell'inode esista
+	if ( block_num >= 0 && block_num < disk->header->inodemap_blocks ) 
+	{
+		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
+		bitmapInode->num_bits = disk->header->inodemap_blocks;
+		bitmapInode->entries = disk->bitmap_inode_values;
+		// Setto che nell'indice indicato l'inode è libero
+		if ( BitMap_set(bitmapInode, block_num, 0) == 0 )
+		{
+			// OK
+			ret = 0;
+		}
+	}
+	return ret;
+}
+
+// Returns the first free inode in the disk from position checking the bitmap
+int DiskDriver_getFreeInode(DiskDriver* disk, int start)
+{
+	int ret;
+	BitMap* bitmapInode;
+	// Verifica che l'indice dell'inode esista
+	if ( start > 0 && start < disk->header->inodemap_blocks ) 
+	{
+		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
+		bitmapInode->num_bits = disk->header->inodemap_blocks;
+		bitmapInode->entries = disk->bitmap_inode_values;
+		// Setto che nell'indice indicato l'inode è libero
+		ret = BitMap_get(bitmapInode, start, 0);
+
+	}
+	return ret;
+}

@@ -11,18 +11,25 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 {
 	DirectoryHandle* directoryHandle = NULL;
 	Inode* inode;
+	BitMap* bitmapInode;
+	//BitMap* bitmapData;
 	//FirstDirectoryBlock* firstDirectoryBlock;
 	// Verifica che ci sia una struttura allocata
 	if ( disk != NULL ) 
 	{
 		// Verifica che nella bitmap degli inode sia occupato il primo blocco inode (indice 0 )
-		BitMap* bitmapInode = (BitMap*)malloc(sizeof(BitMap));
+		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
 		bitmapInode->num_bits = disk->header->inodemap_blocks;
 		bitmapInode->entries = disk->bitmap_inode_values;
+		//bitmapData = (BitMap*)malloc(sizeof(BitMap));
+		//bitmapData->num_bits = disk->header->bitmap_blocks;
+		//bitmapData->entries = disk->bitma
 		fprintf(stderr, "Valore ottenuto da BitMapInode_get: %d\n", BitMap_get(bitmapInode, 0, 1));
-		if ( BitMap_get(bitmapInode, 0, 1) == 0 )
+		inode = (Inode*)malloc(sizeof(Inode));
+		// Leggo il primo inode
+		if ( DiskDriver_readInode(disk, inode, 0) != -1 )
 		{
-			fprintf(stderr, "Il primo inode è occupato\n");
+			fprintf(stderr, "Ho letto il primo inode\n");
 			fs->disk = disk;
 			directoryHandle = (DirectoryHandle*) malloc(sizeof(DirectoryHandle));
 			directoryHandle->sfs = fs;
@@ -33,52 +40,19 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 			// La top level directory è registrata nel primo inode
 			// Ottengo il primo inode e da lì ottengo l'indice del blocco che contiene
 			// il FirstDirectoryBlock
-			inode = (Inode*)malloc(sizeof(Inode));
-			// Mi posizione nel file per leggere il primo inode
-			// Dopo il primo blocco per l'header, dopo la bitmap dei dati e la bitmap degli inode
-			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes, SEEK_SET) != -1 )
+			// Dall'inode ottengo l'indice del blocco contenente il FirstDirectoryBlock
+			directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
+			// L'indice del blocco data contenente i dati è nell'inode
+			if ( DiskDriver_readBlock(disk, (void*)directoryHandle->dcb, inode->primoBlocco) != -1 )
 			{
-				fprintf(stderr, "Posizionato per la lettura del primo inode\n");
-				// Leggo dal file l'inode nella posizione indicata 
-				if ( read(disk->fd, inode, sizeof(Inode)) > 0 )
-				{
-					fprintf(stderr, "Ho letto il primo inode\n");
-					// Dall'inode ottengo l'indice del blocco contenente il FirstDirectoryBlock
-					directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
-					if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(disk->header->inodemap_blocks*32), SEEK_SET) != -1 )
-					{
-						// Leggo il first directory block
-						int letto = read(disk->fd, directoryHandle->dcb, sizeof(FirstDirectoryBlock));
-						fprintf(stderr, "FDB byte letti: %d\n", letto);
-						if ( letto > 0 )
-						{
-							// Setto i restanti campi della directory handle
-							directoryHandle->current_block = &(directoryHandle->dcb->header); // Sono nel primo blocco
-							free(inode);
-						}
-						else
-						{
-							fprintf(stderr,"Errore durante la lettura del primo blocco della directory root\n");
-						}
-					}
-					else
-					{
-						fprintf(stderr,"Errore durante lo spostamento per leggere il primo blocco della directory root\n");
-					}
-				}
-				else
-				{
-					fprintf(stderr,"Errore durante la lettura dell'inode principale (root)\n");
-				}
+				// Setto i restanti campi della directory handle
+				directoryHandle->current_block = &(directoryHandle->dcb->header); // Sono nel primo blocco
 			}
-			else
-			{
-				fprintf(stderr,"Errore durante il posizionamente per la lettura dell'inode principale (root)\n");
-			}
+			free(inode);
 		}
 		else
 		{
-			fprintf(stderr, "Il primo indice degli inode è libero :(\n");
+			fprintf(stderr, "Errore durante la lettura del primo inode\n");
 		}
 		free(bitmapInode);
 	}
@@ -105,80 +79,59 @@ void SimpleFS_format(SimpleFS* fs)
 		bitmapInode = (BitMap*) malloc(sizeof(BitMap));
 		bitmapInode->num_bits = fs->disk->header->inodemap_blocks;
 		bitmapInode->entries = fs->disk->bitmap_inode_values;
-		// Setto occupato il primo inode nella bitmap
-		if ( BitMap_set(bitmapInode, 0, 1) == 1 )
+		// Creo l'inode per la cartella principale
+		inode = (Inode*) malloc(sizeof(Inode));
+		inode->permessiUtente = 7;
+		inode->permessiGruppo = 7;
+		inode->permessiAltri = 7;
+		inode->idUtente = 0;
+		inode->idGruppo = 0;
+		inode->dataCreazione = time(NULL);
+		inode->dataUltimaModifica = inode->dataCreazione; // E' stato creato ora quindi sono uguali
+		inode->dimensioneFile = 4096; // cartella
+		inode->dimensioneInBlocchi = 1;
+		inode->tipoFile = 'd';
+		inode->primoBlocco = 0; // Primo indice data
+		// Scrittura dell'inode su file
+		//if ( lseek(fs->disk->fd, BLOCK_SIZE+fs->disk->header->bitmap_bytes+fs->disk->header->inodemap_bytes, SEEK_SET) != -1 )
+		if ( DiskDriver_writeInode(fs->disk, inode, 0) != -1 )
 		{
-			// Creo l'inode per la cartella principale
-			inode = (Inode*) malloc(sizeof(Inode));
-			inode->permessiUtente = 7;
-			inode->permessiGruppo = 7;
-			inode->permessiAltri = 7;
-			inode->idUtente = 0;
-			inode->idGruppo = 0;
-			inode->dataCreazione = time(NULL);
-			inode->dataUltimaModifica = inode->dataCreazione; // E' stato creato ora quindi sono uguali
-			inode->dimensioneFile = 4096; // cartella
-			inode->dimensioneInBlocchi = 1;
-			inode->tipoFile = 'd';
-			inode->primoBlocco = 0; // Primo indice data
-			// Scrittura dell'inode su file
-			if ( lseek(fs->disk->fd, BLOCK_SIZE+fs->disk->header->bitmap_bytes+fs->disk->header->inodemap_bytes, SEEK_SET) != -1 )
+			// Setto l'indice dell'inode contenente le informazioni della cartella principale
+			fs->current_directory_inode = 0;
+			// Creazione blocco data per la cartella principale (root)
+			firstDirectoryBlock = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
+			firstDirectoryBlock->header.block_in_file = 0;
+			firstDirectoryBlock->header.next_block = -1; // Non ci sono né blocchi precedenti né successivi, in quanto appena creato
+			firstDirectoryBlock->header.previous_block = -1;
+			strcpy(firstDirectoryBlock->fcb.name, "/");
+			firstDirectoryBlock->fcb.block_in_disk = 0;
+			firstDirectoryBlock->fcb.directory_block = -1; // Cartella principale, no parent
+			firstDirectoryBlock->num_entries = 0;
+			// Inizializzazione array della cartella per indicare gli inode figli contenenti in essa
+			int dim = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
+			int index = 0;
+			while ( index < dim )
 			{
-				if ( write(fs->disk->fd, inode, sizeof(Inode)) > 0 )
-				{
-					// Setto l'indice dell'inode contenente le informazioni della cartella principale
-					fs->current_directory_inode = 0;
-					// Creazione blocco data per la cartella principale (root)
-					firstDirectoryBlock = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
-					firstDirectoryBlock->header.block_in_file = 0;
-					firstDirectoryBlock->header.next_block = -1; // Non ci sono né blocchi precedenti né successivi, in quanto appena creato
-					firstDirectoryBlock->header.previous_block = -1;
-					strcpy(firstDirectoryBlock->fcb.name, "/");
-					firstDirectoryBlock->fcb.block_in_disk = 0;
-					firstDirectoryBlock->fcb.directory_block = -1; // Cartella principale, no parent
-					firstDirectoryBlock->num_entries = 0;
-					// Inizializzazione array della cartella per indicare gli inode figli contenenti in essa
-					int dim = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
-					int index = 0;
-					while ( index < dim )
-					{
-						firstDirectoryBlock->file_inodes[index] = -1;
-						index = index + 1;
-					}
-					// Scrittura del fcb su file nella posizione 0 dei data blocks
-					if ( lseek(fs->disk->fd, BLOCK_SIZE+fs->disk->header->bitmap_bytes+fs->disk->header->inodemap_bytes+(fs->disk->header->inodemap_blocks*32), SEEK_SET) !=-1 )
-					{
-						if ( write(fs->disk->fd, firstDirectoryBlock, sizeof(FirstDirectoryBlock)) > 0 ) 
-						{
-							// OK
-						}
-						else
-						{
-							perror("Errore durante la scrittura del first directory block principale (root)\n");
-						}
-					}
-					else
-					{
-						perror("Errore durante lo spostamento per scrivere il first directory block principale (root)\n");
-					}
-					free(firstDirectoryBlock);
-				}
-				else
-				{
-					perror("Errore durante la scirttura dell'inode principale (root)\n");
-				}
-				free(inode);
-				DiskDriver_flush(fs->disk);
+				firstDirectoryBlock->file_inodes[index] = -1;
+				index = index + 1;
+			}
+			// Scrittura del fcb su file nella posizione 0 dei data blocks
+			if ( DiskDriver_writeBlock(fs->disk, (void*)firstDirectoryBlock, 0) != -1 )
+			{
+				// OK
 			}
 			else
 			{
-				perror("Errore durante lo spostamento per scrivere l'inode principale (root)\n");
+				perror("Errore durante la scrittura del first directory block principale (root)\n");
 			}
+			free(firstDirectoryBlock);
 		}
 		else
 		{
-			fprintf(stderr, "Errore durante il settaggio del primo indice della bitmap inode a occupato\n");
+			perror("Errore durante la scirttura dell'inode principale (root)\n");
 		}
+		DiskDriver_flush(fs->disk);
+		free(inode);
 		free(bitmapInode);
 	}
 }
