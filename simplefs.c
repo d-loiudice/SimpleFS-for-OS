@@ -262,7 +262,72 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname);
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
 // -1 on error
-int SimpleFS_mkDir(DirectoryHandle* d, char* dirname);
+int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
+	BitMap* bitmapInode=malloc(sizeof(BitMap));
+	BitMap* bitmapData=malloc(sizeof(BitMap));
+	bitmapInode->num_bits = d->sfs->disk->header->inodemap_blocks;
+	bitmapInode->entries = d->sfs->disk->bitmap_inode_values;
+	bitmapData->num_bits = d->sfs->disk->header->bitmap_blocks;
+	bitmapData->entries = d->sfs->disk->bitmap_data_values;
+	Inode* inode;
+	int indexInode;
+	int indexData;
+	FirstDirectoryBlock* firstDirectoryBlock;
+	if ( d->sfs->disk->header->inodeFree_blocks > 0 ) {
+		indexInode=d->sfs->disk->header->inodeFirst_free_block;
+		if (d->sfs->disk->header->dataFree_blocks>0) {
+			indexData= d->sfs->disk->header->dataFirst_free_block
+
+			inode = (Inode*)malloc(sizeof(Inode));
+			inode->permessiAltri = 7;
+			inode->permessiUtente = 7;
+			inode->permessiGruppo = 7;
+			inode->idUtente = 0;
+			inode->idGruppo = 0;
+			inode->dataCreazione = time(NULL);
+			inode->dataUltimoAccesso = inode->dataCreazione;
+			inode->dataUltimaModifica = inode->dataCreazione;
+			inode->dimensioneFile = 0;
+			inode->dimensioneInBlocchi = 1;
+			inode->tipoFile = 'd';
+			inode->primoBlocco = indexData;
+
+			firstDirectoryBlock=malloc(sizeof(FirstDirectoryBlock));
+
+			firstDirectoryBlock->header.block_in_file=0;
+			firstDirectoryBlock->header.next_block=-1;
+			firstDirectoryBlock->header.previous_block=-1;
+			
+			FirstDirectoryBlock->num_entries=0;
+
+			firstDirectoryBlock->fcb.parent_inode=d->inode;
+			firstDirectoryBlock->fcb.block_in_disk=indexData;
+			strncpy(firstDirectoryBlock->fcb.name, dirname, 128);
+			memset(firstDirectoryBlock->file_inodes, -1, (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) );
+
+			if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode)!= -1 ) {
+				if (DiskDriver_writeBlock(d->sfs->disk, (void*)firstDirectoryBlock, indexData) !=-1) {
+					return 0;
+
+
+				}
+
+			}
+
+			else {
+				fprintf(stderr, "Errore durante la scrittura dell'inode\n");
+				return -1;
+			}
+			
+
+
+
+		}
+
+	}
+	return -1; 
+
+}
 
 // removes the file in the current directory
 // returns -1 on failure 0 on success
