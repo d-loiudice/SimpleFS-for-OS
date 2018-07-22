@@ -8,6 +8,7 @@
 
 #define TRUE 1
 #define FALSE 0
+#define FILE_DIM 2048 //sono 2048 * 512 B = 1024 KB = 1 MB   
 
 // initializes a file system on an already made disk
 // returns a handle to the top level directory stored in the first block
@@ -227,7 +228,46 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d);
 
 
 // opens a file in the  directory d. The file should be exisiting
-FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename);
+FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
+	
+	int i,bound,in_index,ret;
+	
+	FileHandle* f=NULL;
+	Inode* inode;
+	FirstFileBlock* ffb;
+	if(d->fdb==NULL)
+		return NULL;
+	
+	//controllo pre-esistenza del file filename
+	bound=BLOCK_SIZE-sizeof(BLOCK_SIZE
+		   -sizeof(BlockHeader)
+		   -sizeof(FileControlBlock)
+		    -sizeof(int))/sizeof(int);
+	unsigned char found=FALSE; 
+	for(i=0;i<bound;i++){
+		in_index=d->fdb->file_inodes[i];
+		inode=malloc(sizeof(Inode));
+		ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
+		if(ret<0) return NULL;
+		ffb=malloc(sizeof(FirstFileBlock));
+		ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
+		if(ret<0) return NULL;
+		if( strcmp(ffb->fcb.name,filename)==0) found=TRUE;	//confronto i nomi
+		}
+	if(!found) return NULL;
+	
+	DiskDriver_init(f->sfs->disk,filename,inode->dimensioneInBlocchi);
+	
+	f->inode=in_index;
+	f->ffb=ffb;
+	f->current_block=&(ffb->header);
+	f->pos_in_file=0;
+	
+	
+	
+	return f;
+	
+	}
 
 
 // closes a file handle (destroyes it)
@@ -319,7 +359,7 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 	else{	
 		
 		if(is_ffb)
-			num_blocks_to_write= ceil( (double)( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )\
+			num_blocks_to_write= ceil( (double)( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )
 			/(BLOCK_SIZE- sizeof(BlockHeader)) ) + 1;	//conto i sotto blocchi
 		else
 			num_blocks_to_write= size/(BLOCK_SIZE-sizeof(BlockHeader) )+ 1;	//conto i sotto blocchi
@@ -435,7 +475,7 @@ int SimpleFS_read(FileHandle* f, void* data, int size){
 	// Se ho piu blocchi da dover leggere
 	else{
 		if(is_ffb)
-			num_blocks_to_read= ceil((double) ( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )\
+			num_blocks_to_read= ceil((double) ( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )
 			/(BLOCK_SIZE- sizeof(BlockHeader)) ) + 1;
 		else
 			num_blocks_to_read= size/(BLOCK_SIZE-sizeof(BlockHeader) )+ 1;	//conto i sotto blocchi
@@ -524,7 +564,7 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 	if ( d->sfs->disk->header->inodeFree_blocks > 0 ) {
 		indexInode=d->sfs->disk->header->inodeFirst_free_block;
 		if (d->sfs->disk->header->dataFree_blocks>0) {
-			indexData= d->sfs->disk->header->dataFirst_free_block
+			indexData= d->sfs->disk->header->dataFirst_free_block;
 
 			inode = (Inode*)malloc(sizeof(Inode));
 			inode->permessiAltri = 7;
@@ -546,7 +586,7 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 			firstDirectoryBlock->header.next_block=-1;
 			firstDirectoryBlock->header.previous_block=-1;
 			
-			FirstDirectoryBlock->num_entries=0;
+			firstDirectoryBlock->num_entries=0;
 
 			firstDirectoryBlock->fcb.parent_inode=d->inode;
 			firstDirectoryBlock->fcb.block_in_disk=indexData;
