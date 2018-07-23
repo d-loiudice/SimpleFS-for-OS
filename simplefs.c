@@ -235,7 +235,7 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 	FileHandle* f=NULL;
 	Inode* inode;
 	FirstFileBlock* ffb;
-	if(d->fdb==NULL)
+	if(d==NULL || d->fdb==NULL)
 		return NULL;
 	
 	//controllo pre-esistenza del file filename
@@ -288,6 +288,12 @@ int SimpleFS_close(FileHandle* f){
 // overwriting and allocating new space if necessary
 // returns the number of bytes written
 int SimpleFS_write(FileHandle* f, void* data, int size){
+	
+	if(f==NULL || f->ffb ==NULL){
+		perror("not valid file");
+		return -1;
+		}
+	
 	int ret;
 	if(f->ffb==NULL){	//un po come se il file fosse vuoto 
 		perror("cannot find first file block");
@@ -423,8 +429,10 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 // returns the number of bytes read
 int SimpleFS_read(FileHandle* f, void* data, int size){
 	
-	
-	
+	if(f==NULL || f->ffb ==NULL){
+		perror("not valid file");
+		return -1;
+		}	
 	//read the inode info of the file
 	Inode* in_read=malloc(sizeof(Inode));
 	int in_block_num=f->inode ; //index for inode block
@@ -540,7 +548,78 @@ int SimpleFS_read(FileHandle* f, void* data, int size){
 // returns the number of bytes read (moving the current pointer to pos)
 // returns pos on success
 // -1 on error (file too short)
-int SimpleFS_seek(FileHandle* f, int pos);
+int SimpleFS_seek(FileHandle* f, int pos){
+	/*
+	 pos in file, ex:    dove [...]=blocco di 512 B , H1=header, H2=fcb, ***= data
+	file:	{ [H1|H2|***] [H1|***] [H1|***] [H1|***]  ...}
+												 ^pos
+	*/						
+							 
+	int ret=0,bytes_read=0;
+	if(f==NULL || f->ffb ==NULL){
+		perror("not valid file");
+		return -1;
+		}
+	
+	if(pos < 0){
+		perror("negative position");
+		return -1;
+		}
+
+	
+	//Mi prendo l' inode per sapere la dimensione del file e altre info metadata
+	Inode* inode=malloc(sizeof(Inode));
+	ret=DiskDriver_readInode(f->sfs->disk,inode,f->inode);					 
+	if(ret < 0) return -1;
+	
+	if( pos > inode->dimensioneFile ){
+		perror("file too short");
+		return -1;
+		}
+		
+	FileBlock* fbr=malloc(sizeof(FileBlock));
+	FirstFileBlock* ffbr=malloc(sizeof(FirstFileBlock));
+		
+	//In quale blocco è pos?
+	int num_block,payload1_bytes= BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock);	//payload in ffb
+	int payload2_bytes= BLOCK_SIZE-sizeof(BlockHeader);
+	
+	if(pos < payload1_bytes){
+		num_block=1;	// è nel ffb
+	}
+	else if (pos== payload1_bytes){
+		num_block=2;	//è nel secondo blocco
+	}
+	else{
+		num_block= ceil( (pos - payload1_bytes)/payload2_bytes );	//è in uno dei successivi blocchi
+	}
+	
+	if(num_block==1){
+		ret=DiskDriver_readBlock(f->sfs->disk,ffbr,num_block);
+		if(ret <0) return -1;
+		f->current_block= &(ffbr->header);
+	}
+	else{
+		ret=DiskDriver_readBlock(f->sfs->disk,fbr,num_block);
+		if(ret <0) return -1;
+		f->current_block= &(fbr->header);
+	}
+	
+	f->pos_in_file=pos;    
+	bytes_read=pos;	//correct ?
+	
+	inode->dataUltimoAccesso=time(NULL);
+	if(DiskDriver_writeInode(f->sfs->disk,inode,f->inode) < 0){
+		perror("updating inode failed");
+		return -1;
+	}
+	
+	free(ffbr);
+	free(fbr);
+	free(inode);
+	
+	return bytes_read;
+	}
 
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
