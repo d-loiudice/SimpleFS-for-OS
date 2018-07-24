@@ -179,13 +179,16 @@ int main(int agc, char** argv) {
 	printf("Name of folder: %s\n", toplevel->fdb->fcb.name);
 	printf("Create new file called pippo.txt, wow.txt, testare.al\n");
 	FileHandle* hf=malloc(sizeof(hf));
-	hf=SimpleFS_createFile(toplevel, "pippo.txt");
-	if ( hf == NULL )
+	//hf=SimpleFS_createFile(toplevel, "pippo.txt");
+	/*if ( hf == NULL )
 	{
 		printf("Errore durante la creazione del file\n");
-	}
-	SimpleFS_createFile(toplevel, "wow.txt");
-	SimpleFS_createFile(toplevel, "testare.al");
+	}*/
+	//SimpleFS_createFile(toplevel, "wow.txt");
+	//SimpleFS_createFile(toplevel, "testare.al");
+	i=0;
+	while ( i < 
+	
 	char** contenutoDirectory = (char**)malloc(sizeof(toplevel->fdb->num_entries*sizeof(char*)));
 	i = 0;
 	while ( i < toplevel->fdb->num_entries )
@@ -202,6 +205,7 @@ int main(int agc, char** argv) {
 		printf("Index %d : name = %s\n",i, contenutoDirectory[i]);
 		i++;
 	}
+	printf("Number max inode in FirstDirectoryBlock: %d\n", (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int));
 	if(hf==NULL)
 		perror("hf null");
 	hf=SimpleFS_openFile(toplevel,"pippo.txt");

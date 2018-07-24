@@ -989,11 +989,15 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 {
 	// DirectoryBlock inizializzata nel caso si andasse dopo il FirstDirectoryBlock
 	DirectoryBlock* directoryBlock = NULL;
-	int indiceBloccoAttuale;
-	int indiceBloccoPrecedente;
+	DirectoryBlock* precedenteDirectoryBlock = NULL;
+	DirectoryBlock* nuovoDirectoryBlock = NULL;
+	int indiceBloccoAttuale = d->fdb->fcb.block_in_disk;
+	int indiceBloccoPrecedente = -1;
+	int indiceInBloccoPrecedente; // Blocco precedente se c'è fcb = 0, o altri casi..
 	int index = 0;
 	int ret = -1;
 	int dimension;
+	int indiceBloccoNuovo;
 	// Verifica che ci sia spazio nel FirstDirectoryBlock per inserire l'inode
 	dimension = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
 	while ( index < dimension && ret == -1)
@@ -1002,8 +1006,133 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 		{
 			ret = inode;
 			d->fdb->file_inodes[index] = inode;
+			// Scrivo la modifica su disco
+			if ( DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk) != -1 )
+			{
+				// OK 
+				ret = inode;
+			}
+			else
+			{
+				fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Errore durante la scrittura/modifica di un FirstDirectoryBlock a indice %d\n", d->fdb->fcb.block_in_disk);
+			}
 		}
 		index = index + 1;
+	}
+	// Se ancora non è stato inserito, verifico nei blocchi successivi se esistono
+	if ( ret == -1 )
+	{
+		indiceBloccoPrecedente = indiceBloccoAttuale;
+		indiceInBloccoPrecedente = d->fdb->header.block_in_file;
+		indiceBloccoAttuale = d->fdb->header.next_block;
+		while ( indiceBloccoAttuale != -1 && ret == -1 )
+		{
+			directoryBlock = (DirectoryBlock*) malloc(sizeof(DirectoryBlock));
+			// Leggo dal disco il blocco DirectoryBlock
+			if ( DiskDriver_readBlock(d->sfs->disk, directoryBlock, indiceBloccoAttuale) != -1 )
+			{
+				// Verifica che ci sia spazio nel DirectoryBlock per inserire l'inode
+				index = 0;
+				dimension = (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int);
+				while ( index < dimension && ret == -1)
+				{
+					if ( directoryBlock->file_inodes[index] == -1 )
+					{
+						ret = inode;
+						directoryBlock->file_inodes[index] = inode;
+						// Scrivo la modifica su disco
+						if ( DiskDriver_writeBlock(d->sfs->disk, directoryBlock, indiceBloccoAttuale) != -1 )
+						{
+							// OK 
+							ret = inode;
+						}
+						else
+						{
+							fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Errore durante la scrittura/modifica di un DirectoryBlock a indice %d\n", indiceBloccoAttuale);
+						}
+					}
+					index = index + 1;
+				}
+			}
+			else
+			{
+				fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Errore durante la lettura di un DirectoryBlock a indice %d\n", indiceBloccoAttuale);
+			}
+			
+			// Se ancora non è stato trovato spazio per l'inode, passo al blocco successivo
+			if ( ret == -1 )
+			{
+				indiceBloccoPrecedente = indiceBloccoAttuale;
+				indiceInBloccoPrecedente = directoryBlock->header.block_in_file;
+				indiceBloccoAttuale = directoryBlock->header.next_block;
+				if ( precedenteDirectoryBlock != NULL) 
+				{
+					free(precedenteDirectoryBlock);
+				}
+				precedenteDirectoryBlock = directoryBlock;
+			}
+		}
+		
+		// Se anche dopo questa iterazione ancora non è stato inserito, creo un nuovo blocco
+		if ( ret == -1 )
+		{
+			fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Creazione nuovo DirectoryBlock, tutti i precedenti erano occupati\n");
+			nuovoDirectoryBlock = (DirectoryBlock*) malloc(sizeof(DirectoryBlock));
+			nuovoDirectoryBlock->header.previous_block = indiceBloccoPrecedente;
+			nuovoDirectoryBlock->header.next_block = -1;
+			nuovoDirectoryBlock->header.block_in_file = indiceInBloccoPrecedente+1;
+			nuovoDirectoryBlock->file_inodes[0] = inode;
+			// Ottengo il primo blocco libero
+			indiceBloccoNuovo = DiskDriver_getFreeBlock(d->sfs->disk, 0);
+			if ( indiceBloccoNuovo != -1 )
+			{
+				// Scrittura del nuovo blocco su disco all'indiceBloccoNuovo
+				if ( DiskDriver_writeBlock(d->sfs->disk, nuovoDirectoryBlock, indiceBloccoNuovo) != -1 )
+				{
+					// Se il blocco numero 1 della cartella allora il precedente è il FirstDirectoryBlock nella DirectoryHandle passato come parametro
+					if ( nuovoDirectoryBlock->header.block_in_file == 1 )
+					{		
+						// Aggiorno l'header del FirstDirectoryBlock
+						d->fdb->header.next_block = indiceBloccoNuovo;
+						// Scrivo su file il FirstDirectoryBlock a indice d->fdb->fcb->block_in_disk
+						if ( DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk) != -1 )
+						{
+							// OK
+							ret = inode;
+						}
+						else
+						{
+							fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Errore durante la scrittura del FirstDirectoryBlock a indice %d\n", d->fdb->fcb.block_in_disk);
+						}
+					}
+					// Altrimenti il precedente è in precedenteDirectoryBlock
+					else
+					{
+						// Aggiorno l'header del precendete DirectoryBlock
+						precedenteDirectoryBlock->header.next_block = indiceBloccoNuovo;
+						// Scrivo su file il DirectoryBlock a indice indiceBloccoPrecedente
+						if ( DiskDriver_writeBlock(d->sfs->disk, precedenteDirectoryBlock, indiceBloccoPrecedente) != -1 )
+						{
+							// OK
+							ret = inode;
+						}
+						else
+						{
+							fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Errore durante la scrittura del DirectoryBlock a indice %d\n", indiceBloccoPrecedente);
+						}
+					}
+				}
+				else
+				{
+					fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Errore durante la scrittura del nuovo DirectoryBlock a indice %d\n", indiceBloccoNuovo);
+				}
+			}
+			else
+			{
+				fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Non ci sono blocchi data liberi\n");
+				
+			}
+		}
 	}
 	return ret;
 }
