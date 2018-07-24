@@ -229,10 +229,14 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 	// names preallocato (d->fdb->num_entries) * 128
 	// Inizializzazione per entrare nell'iterazione
 	// int indexBlocks = 0;
-	BlockHeader* blockHeader = &(d->fdb->header)
+	//BlockHeader* blockHeader = &(d->fdb->header)
+	BlockHeader* blockHeader = (BlockHeader*)malloc(sizeof(BlockHeader));
+	memcpy(blockHeader, &(d->fdb->header), sizeof(BlockHeader));
 	int indexNames = 0; 		// Contatore per l'array dei nomi dei file
 	int indexFiles;	    		// Contatore per l'array nel Directory Block
 	int dimension;	    		// Dimensione dell'array nel Directory Block
+	int indexBloccoAttuale;
+	DirectoryBlock* directory;  // Cartella utilizzata per memorizzare i DirectoryBlock successivi
 	Inode* inodeRead;
 	void* blockRead;
 	while ( blockHeader != NULL && indexNames < d->fdb->num_entries )
@@ -248,15 +252,23 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 				// Se effettivamente è presente un indice inode valido relativo al file...
 				if ( d->fdb->file_inodes[indexFiles] != -1 )
 				{
-					// ... Ottengo l'inode e successivamente il FirstFileBlock indicato dall'inode acquisito
+					// ... Ottengo l'inode e successivamente il FirstFileBlock/FirstDirectoryBlock indicato dall'inode acquisito
 					// e da esso leggo il nome del file contenuto nel FileControlBlock
 					inodeRead = (Inode*)malloc(sizeof(Inode));
 					if ( DiskDriver_readInode(d->sfs->disk, inodeRead ,d->fdb->file_inodes[indexFiles]) != -1 )
 					{
-						blockRead = malloc(sizeof(FirstDirectoryBlock));
+						// Se è una cartella alloco un FirstDirectoryBlock, altrimenti un FirstFileBlock
+						blockRead = (inodeRead->tipoFile == 'd' ? malloc(sizeof(FirstDirectoryBlock)) : malloc(sizeof(FirstFileBlock)));
 						if ( DiskDriver_readBlock(d->sfs->disk, blockRead ,inodeRead->primoBlocco) != -1 )
 						{
-							strncpy(names[indexNames], blockRead->fcb.name, 128);
+							if ( inodeRead->tipoFile == 'd' )
+							{
+								strncpy(names[indexNames], ((FirstDirectoryBlock*)blockRead)->fcb.name, 128);
+							}
+							else
+							{
+								strncpy(names[indexNames], ((FirstFileBlock*)blockRead)->fcb.name, 128);
+							}
 							indexNames = indexNames + 1;
 						}
 						free(blockRead);						
@@ -271,10 +283,60 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 		{
 			dimension = (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int);
 			indexFiles = 0;
-			// Ottengo il DirectoryBlock dal disco
+			// Ho già il DirectoryBlock allocato in directory
+			while ( indexFiles < dimension )
+			{
+				// Se effettivamente è presente un indice inode valido relativo al file...
+				if ( directory->file_inodes[indexFiles] != -1 )
+				{
+					// ... Ottengo l'inode e successivamente il FirstFileBlock/FirstDirectoryBlock indicato dall'inode acquisito
+					// e da esso leggo il nome del file contenuto nel FileControlBlock
+					inodeRead = (Inode*)malloc(sizeof(Inode));
+					if ( DiskDriver_readInode(d->sfs->disk, inodeRead ,d->fdb->file_inodes[indexFiles]) != -1 )
+					{
+						// Se è una cartella alloco un FirstDirectoryBlock, altrimenti un FirstFileBlock
+						blockRead = (inodeRead->tipoFile == 'd' ? malloc(sizeof(FirstDirectoryBlock)) : malloc(sizeof(FirstFileBlock)));
+						if ( DiskDriver_readBlock(d->sfs->disk, blockRead ,inodeRead->primoBlocco) != -1 )
+						{
+							if ( inodeRead->tipoFile == 'd' )
+							{
+								strncpy(names[indexNames], ((FirstDirectoryBlock*)blockRead)->fcb.name, 128);
+							}
+							else
+							{
+								strncpy(names[indexNames], ((FirstFileBlock*)blockRead)->fcb.name, 128);
+							}
+							indexNames = indexNames + 1;
+						}
+						free(blockRead);						
+					}
+					free(inodeRead);
+				}
+				indexFiles = indexFiles + 1;
+			}
+			
 		}
 		// Passo al blocco successivo
-		indexBloccoAttuale = d->fdb->header.next_block;
+		//indexBloccoAttuale = d->fdb->header->next_block;
+		indexBloccoAttuale = blockHeader->next_block;
+		// Se esiste il blocco...
+		if ( indexBloccoAttuale != -1 )
+		{
+			// ... lo leggo
+			directory = (DirectoryBlock*) malloc(sizeof(DirectoryBlock));
+			if ( DiskDriver_readBlock(d->sfs->disk, directory, indexBloccoAttuale) != -1 )
+			{
+				// Estraggo il Blockheader e lo memorizzo nella DirectoryHandle (mi conviene?)
+				free(blockHeader);
+				blockHeader = (BlockHeader*)malloc(sizeof(BlockHeader));
+				memcpy(blockHeader, &(directory->header), sizeof(BlockHeader));
+			}
+		}
+		else
+		{
+			// Altrimenti non esiste alcun blocco successivo 
+			blockHeader = NULL;
+		}
 		indexNames = indexNames + 1;
 	}
 	return 0;
