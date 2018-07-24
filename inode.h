@@ -2,6 +2,7 @@
 // Libreria per accesso standardizzato alle funzioni di acquisizione e manipolazione del tempo 
 #include <time.h>
 // Dimensione totale della struttura = 1+1+1+1+1+4+4+4+4+1+4 = 30+2padding -> sarebbe bello che fosse un divisore di 512, almeno non si spreca spazio nei blocchi
+// no maths here: sizeof(Inode) senza padding = 54
 typedef struct
 {
 	// unsigned char == uint8_t, per memorizzare byte / piccoli valori ( sizeof(unsigned char) = 1 )
@@ -30,8 +31,8 @@ typedef struct
 	char tipoFile;
 	// Indice del primo blocco del file (LINKED LIST BLOCKS)
 	unsigned int primoBlocco;
-	// Padding per raggiungere i 32byte
-	char padding[2];
+	// Padding per raggiungere i 64byte
+	char padding[10];
 	/// NO NEED: non avevo lette le specifiche
 	// Gestione dell'indirizzamento ai blocchi contenente il contenuto del file
 	// Per ora massima dimensione del file possibile con questi puntatori = 1GB ( circa 1 082 202 112 bytes )

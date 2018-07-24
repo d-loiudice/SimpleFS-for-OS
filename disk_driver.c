@@ -15,7 +15,7 @@
 #define NUM_SUPER 1		//num block (just one) for super block
 #define NUM_BITMAPS 2	//fixed total num of blocks for bitmap structures
 #define NUM_INODES 5	//fixed total num of inodes
-#define INODES_PER_BLOCK 16	//how much inodes are in a block
+#define INODES_PER_BLOCK 8	//how much inodes are in a block
 
 
 int fp=-1;
@@ -95,13 +95,18 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 			// Devo inizializzare il DiskHeader e le BitMap (data e inode)
 			nuovoDiskHeader->num_blocks = num_blocks;
 			/// NUMERI INODE FISSO PER ORA
-			// Quanti inode ho mappati sulla bitmap degli inode
-			nuovoDiskHeader->inodemap_blocks = NUM_INODES * INODES_PER_BLOCK ;
+
+			//nuovoDiskHeader->inodemap_blocks = NUM_INODES * INODES_PER_BLOCK ;
+
 			// Grandezza dell'inodemap in byte, arrotondati per eccesso con BLOCK_SIZE
 			nuovoDiskHeader->inodemap_bytes = BLOCK_SIZE;
 			
+			// Quanti inode ho mappati sulla bitmap degli inode
+			nuovoDiskHeader->inodemap_blocks = 5*BLOCK_SIZE/sizeof(Inode);
+			
 			// 3 blocchi sono riservati al superblocco e le 2 bitmap (data e inodes), oltre ai 5 riservati agli inode
-			nuovoDiskHeader->bitmap_blocks = num_blocks - 3 - nuovoDiskHeader->inodemap_blocks/INODES_PER_BLOCK;
+			//nuovoDiskHeader->bitmap_blocks = num_blocks - 3 - nuovoDiskHeader->inodemap_blocks/INODES_PER_BLOCK;
+			nuovoDiskHeader->bitmap_blocks = num_blocks - 3 - 5;
 			nuovoDiskHeader->bitmap_bytes = BLOCK_SIZE;
 			
 			// Nuovo file tutti i blocchi/inode sono vuoti
@@ -109,7 +114,8 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 			nuovoDiskHeader->dataFirst_free_block = 0;
 			nuovoDiskHeader->inodeFree_blocks = nuovoDiskHeader->inodemap_blocks;
 			nuovoDiskHeader->inodeFirst_free_block = 0;
-						
+			fprintf(stderr, "DiskDriver_init() -> dataFree_blocks = %d\n", nuovoDiskHeader->dataFree_blocks);
+			fprintf(stderr, "DiskDriver_init() -> inodeFree_blocks = %d\n", nuovoDiskHeader->inodeFree_blocks);
 			// Mmap del DiskHeader e delle BitMap ( Data e Inodes )
 			// Mmap del diskheader all'inizio del file
 			fprintf(stderr, "BlockSize: %d\n", BLOCK_SIZE);
@@ -155,7 +161,7 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	
 	
-	block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
+	//block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
 	char* bm=disk->bitmap_data_values;
 	
 	BitMapEntryKey k=BitMap_blockToIndex(block_num);
@@ -168,7 +174,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 
 	char* blockRead=(char*) malloc(sizeof(char)*BLOCK_SIZE);
 	//move in the file till block num reached
-	if(lseek(disk->fd, block_num*BLOCK_SIZE, SEEK_SET) < 0 ){
+	if(lseek(disk->fd, (NUM_SUPER+NUM_BITMAPS+NUM_INODES+block_num) * BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
 		return -1;
 	}
@@ -197,31 +203,32 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	return 0;
 	*/
 	//TODO sempre il problema della bitmap non ancora implementata
-	block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
+	//block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
 	
 	BitMap* bm = (BitMap*)malloc(sizeof(BitMap));
 	bm->num_bits = disk->header->bitmap_blocks;
 	bm->entries = disk->bitmap_data_values;
 
-	if ( BitMap_get(bm, block_num, 0) != block_num ){
+	/*if ( BitMap_get(bm, block_num, 0) != block_num ){
 		perror("block num in bitmap is already 1");
 		return -1;
 		}
-	
-	if(lseek(disk->fd, block_num * BLOCK_SIZE, SEEK_SET) < 0 ){
+	*/
+	fprintf(stderr, "DiskDriver_writeBlock() -> prima di spostarmi nel file : valore inodemap_blocks = %d\n", disk->header->inodemap_blocks);
+	if(lseek(disk->fd, (NUM_SUPER+NUM_BITMAPS+NUM_INODES+block_num) * BLOCK_SIZE, SEEK_SET) < 0 ){
 		perror("ERR:");
 		return -1;
 	}
-	
+	fprintf(stderr, "DiskDriver_writeBlock() -> dopo essermi spostato nel file : valore inodemap_blocks = %d\n", disk->header->inodemap_blocks);
 	//TODO last accessed in inode has to be updated
 	if(write(disk->fd, src, BLOCK_SIZE) < 0 ){
 		perror("ERR:");
 		return -1;
 	}
-		
+	fprintf(stderr, "DiskDriver_writeBlock() -> dopo aver scritto nel file : valore inodemap_blocks = %d\n", disk->header->inodemap_blocks);
 	BitMap_set(bm,block_num,1);
 	disk->header->dataFirst_free_block=BitMap_get(bm,0,0);
-	
+	fprintf(stderr, "DiskDriver_writeBlock() -> Data free blocks = %d\n", disk->header->dataFree_blocks);
 	if( disk->header->dataFree_blocks-- < 0 ){
 		perror("data free blocks got negative");
 		return -1;
@@ -321,6 +328,7 @@ int DiskDriver_flush(DiskDriver* disk)
 // returns -1 if the inode i s free according to bitmap, 0 otherwise
 int DiskDriver_readInode(DiskDriver* disk, void* dest, int block_num)
 {
+	//fprintf(stderr, "Sono dentro DiskDriver_readInode()\n");
 	int ret = -1;
 	BitMap* bitmapInode;
 	// Verifica che l'indice dell'inode esista
@@ -334,16 +342,33 @@ int DiskDriver_readInode(DiskDriver* disk, void* dest, int block_num)
 		{
 			// Spostamento nella posizione indicata dall'indice 
 			// Dopo il superblocco e i blocchi necessari per registrare la bitmap dei dati e inodes
-			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(16*block_num), SEEK_SET) != -1 )
+			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(sizeof(Inode)*block_num), SEEK_SET) != -1 )
 			{
 				// Leggo dal file
-				if ( read(disk->fd, dest, sizeof(Inode)) > 0 )
+				int letto = read(disk->fd, dest, sizeof(Inode));
+				if ( letto > 0 )
 				{
 					// OK
 					ret = 0;
 				}
+				else
+				{
+					fprintf(stderr, "DiskDriver_readInode() -> Errore durante la lettura dell'inode %d, letto: %d\n", block_num, letto);
+				}
+			}
+			else
+			{
+				fprintf(stderr, "DiskDriver_readInode() -> Errore durante lo spostamento per leggere l'inode %d\n", block_num);
 			}
 		}
+		else
+		{
+			fprintf(stderr, "DiskDriver_readInode() -> L'inode da leggere è libero, non ha dati\n");
+		}
+	}
+	else
+	{
+		fprintf(stderr, "DiskDriver_readInode() -> Valore non valido:  %d, max numero inode: %d\n", block_num, disk->header->inodemap_blocks);
 	}
 	return ret;
 }
@@ -365,7 +390,7 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 		{
 			// Spostamento nella posizione indicata dall'indice
 			// Dopo il superblocco e i blocchi necessari per registrare la bitmap dei dati e inodes
-			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(16*block_num), SEEK_SET) != -1 )
+			if ( lseek(disk->fd, BLOCK_SIZE+disk->header->bitmap_bytes+disk->header->inodemap_bytes+(sizeof(Inode)*block_num), SEEK_SET) != -1 )
 			{
 				// Scrivo sul file
 				if ( write(disk->fd, src, sizeof(Inode)) > 0 )

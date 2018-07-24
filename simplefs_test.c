@@ -104,7 +104,7 @@ int main(int agc, char** argv) {
 	DiskDriver* dd = (DiskDriver*) malloc(sizeof(DiskDriver));
 	DiskDriver_init(dd,"fileTest",50);
 	printf("--DISKHEADER--\n");
-	printf("Test done on an expected new file, please delete the file created after each run\n");
+	//printf("Test done on an expected new file, please delete the file created after each run\n");
 	printf("File descriptor: %d\n", dd->fd);
 	printf("Numero blocchi totali: %d\n", dd->header->num_blocks);
 	printf("Numero blocchi mappati dalla bitmap_data: %d\n", dd->header->bitmap_blocks);
@@ -120,6 +120,8 @@ int main(int agc, char** argv) {
 	printf("Bitmap inode: \n");
 	bits_print(dd->bitmap_inode_values, 10);
 	
+	//int i;
+
 	BitMap* bm2=malloc(sizeof(BitMap));
 	bm2->entries= dd->bitmap_data_values;
 	bm2->num_bits= dd->header->bitmap_bytes*8;
@@ -135,7 +137,7 @@ int main(int agc, char** argv) {
 
 	bits_print(dd->bitmap_data_values,10);
 	
-	
+	printf("Numero blocchi mappati dalla bitmap_inode: %d\n", dd->header->inodemap_blocks);
 	printf("call write on 2: %d \n", DiskDriver_writeBlock(dd,"lorem ipsum",2) ); 
 
 	char* sread=malloc(sizeof(BLOCK_SIZE));
@@ -143,7 +145,7 @@ int main(int agc, char** argv) {
 	printf("readed: %s\n",sread);
 	//free(sread);
 	char* blockw = malloc(sizeof(BLOCK_SIZE));
-	
+	printf("Numero blocchi mappati dalla bitmap_inode: %d\n", dd->header->inodemap_blocks);
 	printf("Test freeBlock() e getFreeBlock()\n");
 	BitMap* bitmapTest = (BitMap*)malloc(sizeof(BitMap));
 	bitmapTest->num_bits = dd->header->bitmap_blocks;
@@ -154,7 +156,7 @@ int main(int agc, char** argv) {
 	printf("Free data block in index out of range (value expected -1) => %d\n", DiskDriver_freeBlock(dd, 113133));
 	printf("Get first free data block (value expected 0) => %d\n", DiskDriver_getFreeBlock(dd, 0));
 	
-	
+	printf("Numero blocchi mappati dalla bitmap_inode: %d\n", dd->header->inodemap_blocks);
 	printf("--DISKDRIVER END--\n");
 
 	//-------------------SIMPLE_FS TESTING-----------------------------------
@@ -166,16 +168,40 @@ int main(int agc, char** argv) {
 	printf("DirectoryBlock size %ld\n", sizeof(DirectoryBlock));
 	SimpleFS* fileSystem = (SimpleFS*) malloc(sizeof(SimpleFS));
 	fileSystem->disk = dd;
+	printf("Before format max numbers inode %d\n", fileSystem->disk->header->inodemap_blocks);
 	printf("Format the disk\n");
 	SimpleFS_format(fileSystem);
+	printf("After format max numbers inode %d\n", fileSystem->disk->header->inodemap_blocks);
 	printf("And then init the filesystem\n");
 	DirectoryHandle* toplevel = SimpleFS_init(fileSystem, dd);
 	printf("Directory Handle toplevel\n");
 	printf("Number entities: %d\n", toplevel->fdb->num_entries);
 	printf("Name of folder: %s\n", toplevel->fdb->fcb.name);
-	printf("Create new file called pippo.txt\n");
+	printf("Create new file called pippo.txt, wow.txt, testare.al\n");
 	FileHandle* hf=malloc(sizeof(hf));
 	hf=SimpleFS_createFile(toplevel, "pippo.txt");
+	if ( hf == NULL )
+	{
+		printf("Errore durante la creazione del file\n");
+	}
+	SimpleFS_createFile(toplevel, "wow.txt");
+	SimpleFS_createFile(toplevel, "testare.al");
+	char** contenutoDirectory = (char**)malloc(sizeof(toplevel->fdb->num_entries*sizeof(char*)));
+	i = 0;
+	while ( i < toplevel->fdb->num_entries )
+	{
+		contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
+		i++;
+	}
+	printf("Test readDir() in toplevel\n");
+	SimpleFS_readDir(contenutoDirectory, toplevel);
+	i = 0;
+	printf("How many files in toplevel directory: %d\n", toplevel->fdb->num_entries);
+	while ( i < toplevel->fdb->num_entries )
+	{
+		printf("Index %d : name = %s\n",i, contenutoDirectory[i]);
+		i++;
+	}
 	if(hf==NULL)
 		perror("hf null");
 	hf=SimpleFS_openFile(toplevel,"pippo.txt");

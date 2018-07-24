@@ -61,7 +61,7 @@ int BitMap_get(BitMap* bmap, int start, int status){
 
 // sets the bit at index pos in bmap to status
 int BitMap_set(BitMap* bmap, int pos, int status){
-	
+	fprintf(stderr, "BitMap_set() -> setto posizione %d a %d\n", pos, status);
 
 
 	int i;

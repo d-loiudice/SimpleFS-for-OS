@@ -152,5 +152,5 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname);
 int SimpleFS_remove(SimpleFS* fs, char* filename);
 
 
-  
+int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode);
 
