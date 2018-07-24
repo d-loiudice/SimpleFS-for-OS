@@ -177,17 +177,19 @@ int main(int agc, char** argv) {
 	printf("Directory Handle toplevel\n");
 	printf("Number entities: %d\n", toplevel->fdb->num_entries);
 	printf("Name of folder: %s\n", toplevel->fdb->fcb.name);
-	printf("Create new file called pippo.txt, wow.txt, testare.al\n");
+	printf("Create new file called pippo.txt, wow.txt, pippo.txt, testare.al and directory hello\n");
 	FileHandle* hf=malloc(sizeof(hf));
-	//hf=SimpleFS_createFile(toplevel, "pippo.txt");
+	hf=SimpleFS_createFile(toplevel, "pippo.txt");
+	SimpleFS_createFile(toplevel, "pippo.txt");
 	/*if ( hf == NULL )
 	{
 		printf("Errore durante la creazione del file\n");
 	}*/
-	//SimpleFS_createFile(toplevel, "wow.txt");
-	//SimpleFS_createFile(toplevel, "testare.al");
+	SimpleFS_createFile(toplevel, "wow.txt");
+	SimpleFS_createFile(toplevel, "testare.al");
+	SimpleFS_mkDir(toplevel, "directory");
 	i=0;
-	while ( i < 
+	//while ( i < 
 	
 	char** contenutoDirectory = (char**)malloc(sizeof(toplevel->fdb->num_entries*sizeof(char*)));
 	i = 0;
