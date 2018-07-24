@@ -982,6 +982,7 @@ static int rec_remove(SimpleFS* fs,FirstDirectoryBlock* fdbr,Inode* inode,int nu
 	return num_removed;
 	}
 
+<<<<<<< HEAD
 
 // Funzione ausiliare per inserire gli inode nelle directory ( ricercando un -1 da poter rimpiazzare )
 // Se un blocco è pieno si necessita un nuovo blocco DirectoryBlock che si crea
@@ -1008,6 +1009,8 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 	}
 	return ret;
 }
+=======
+>>>>>>> 8c86ecce7f82596bbf98f88c8a48d3ab20667d99
 
 // removes the file in the current directory
 // returns -1 on failure 0 on success
