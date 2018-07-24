@@ -219,7 +219,61 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	return fileHandle;
 }
 // reads in the (preallocated) blocks array, the name of all files in a directory 
-int SimpleFS_readDir(char** names, DirectoryHandle* d);
+int SimpleFS_readDir(char** names, DirectoryHandle* d)
+{
+	// names preallocato (d->fdb->num_entries) * 128
+	// Inizializzazione per entrare nell'iterazione
+	// int indexBlocks = 0;
+	BlockHeader* blockHeader = &(d->fdb->header)
+	int indexNames = 0; 		// Contatore per l'array dei nomi dei file
+	int indexFiles;	    		// Contatore per l'array nel Directory Block
+	int dimension;	    		// Dimensione dell'array nel Directory Block
+	Inode* inodeRead;
+	void* blockRead;
+	while ( blockHeader != NULL && indexNames < d->fdb->num_entries )
+	{
+		// Se è il FirstDirectoryBlock ho la possibilità di avere (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) files
+		if ( blockHeader->block_in_file == 0 )
+		{
+			dimension = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
+			indexFiles = 0;
+			// Ho già il FirstDirectoryBlock allocato
+			while ( indexFiles < dimension )
+			{
+				// Se effettivamente è presente un indice inode valido relativo al file...
+				if ( d->fdb->file_inodes[indexFiles] != -1 )
+				{
+					// ... Ottengo l'inode e successivamente il FirstFileBlock indicato dall'inode acquisito
+					// e da esso leggo il nome del file contenuto nel FileControlBlock
+					inodeRead = (Inode*)malloc(sizeof(Inode));
+					if ( DiskDriver_readInode(d->sfs->disk, inodeRead ,d->fdb->file_inodes[indexFiles]) != -1 )
+					{
+						blockRead = malloc(sizeof(FirstDirectoryBlock));
+						if ( DiskDriver_readBlock(d->sfs->disk, blockRead ,inodeRead->primoBlocco) != -1 )
+						{
+							strncpy(names[indexNames], blockRead->fcb.name, 128);
+							indexNames = indexNames + 1;
+						}
+						free(blockRead);						
+					}
+					free(inodeRead);
+				}
+				indexFiles = indexFiles + 1;
+			}
+		}
+		// Altrimenti è il Directory Block quindi avrò al massimo (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int) files
+		else
+		{
+			dimension = (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int);
+			indexFiles = 0;
+			// Ottengo il DirectoryBlock dal disco
+		}
+		// Passo al blocco successivo
+		indexBloccoAttuale = d->fdb->header.next_block;
+		indexNames = indexNames + 1;
+	}
+	return 0;
+}
 
 
 // opens a file in the  directory d. The file should be exisiting
