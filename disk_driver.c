@@ -12,10 +12,10 @@
 #include "inode.h"
 
 #define ERROR -1
-#define NUM_SUPER 1
-#define NUM_BITMAPS 2
-#define NUM_INODES 5
-#define INODES_PER_BLOCK 16
+#define NUM_SUPER 1		//num block (just one) for super block
+#define NUM_BITMAPS 2	//fixed total num of blocks for bitmap structures
+#define NUM_INODES 5	//fixed total num of inodes
+#define INODES_PER_BLOCK 16	//how much inodes are in a block
 
 
 int fp=-1;

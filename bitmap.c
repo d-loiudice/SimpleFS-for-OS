@@ -50,7 +50,7 @@ int BitMap_get(BitMap* bmap, int start, int status){
 	for(i=k.entry_num; i < bmap->num_bits/8;i++){	//start from start block
 		for (j=k.bit_num ;j<8;j++){
 			//printf("%d ",bit_get(bmap->entries[i],j));
-			char r=bit_get(bmap->entries[i],j)!=0?1:0;
+			char r=bit_get(bmap->entries[i],j) !=0 ? 1 : 0;
 			if(  r== status)
 				return BitMap_indexToBlock(i,j);	//LINEAR
 		}

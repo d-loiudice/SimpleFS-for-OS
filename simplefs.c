@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <math.h>
 #include "disk_driver.h"
 #include "simplefs.h"
+
+#define TRUE 1
+#define FALSE 0
+#define FILE_DIM 2048 //sono 2048 * 512 B = 1024 KB = 1 MB   
 
 // initializes a file system on an already made disk
 // returns a handle to the top level directory stored in the first block
@@ -277,26 +282,398 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 
 
 // opens a file in the  directory d. The file should be exisiting
-FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename);
+FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
+	
+	int i,bound,in_index,ret;
+	
+	FileHandle* f=NULL;
+	Inode* inode;
+	FirstFileBlock* ffb;
+	if(d==NULL || d->fdb==NULL)
+		return NULL;
+	
+	//controllo pre-esistenza del file filename
+	bound=BLOCK_SIZE-sizeof(BLOCK_SIZE
+		   -sizeof(BlockHeader)
+		   -sizeof(FileControlBlock)
+		    -sizeof(int))/sizeof(int);
+	unsigned char found=FALSE; 
+	for(i=0;i<bound;i++){
+		in_index=d->fdb->file_inodes[i];
+		inode=malloc(sizeof(Inode));
+		ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
+		if(ret<0) return NULL;
+		ffb=malloc(sizeof(FirstFileBlock));
+		ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
+		if(ret<0) return NULL;
+		if( strcmp(ffb->fcb.name,filename)==0) found=TRUE;	//confronto i nomi
+		}
+	if(!found) return NULL;
+	
+	DiskDriver_init(f->sfs->disk,filename,inode->dimensioneInBlocchi);
+	
+	f->inode=in_index;
+	f->ffb=ffb;
+	f->current_block=&(ffb->header);
+	f->pos_in_file=0;
+	
+	
+	
+	return f;
+	
+	}
 
 
 // closes a file handle (destroyes it)
-int SimpleFS_close(FileHandle* f);
+int SimpleFS_close(FileHandle* f){
+	if (f==NULL) {
+		perror("file not valid (null)");
+		return -1;
+	}
+	free(f->current_block);
+	free(f->ffb);
+	free(f);
+	printf("ciaone\n");
+	return 1;
+
+}
 
 // writes in the file, at current position for size bytes stored in data
 // overwriting and allocating new space if necessary
 // returns the number of bytes written
-int SimpleFS_write(FileHandle* f, void* data, int size);
+int SimpleFS_write(FileHandle* f, void* data, int size){
+	
+	if(f==NULL || f->ffb ==NULL){
+		perror("not valid file");
+		return -1;
+		}
+	
+	int ret;
+	if(f->ffb==NULL){	//un po come se il file fosse vuoto 
+		perror("cannot find first file block");
+		return -1;
+	}
+	
+	
+	//lettura inode
+	Inode* in_read=malloc(sizeof(Inode));
+	int in_block_num=f->inode ; //index to access the inode of the file 
+	
+	if(DiskDriver_readInode(f->sfs->disk,in_read,in_block_num ) < 0 ){
+		perror("errore read inode for write");
+		return -1;
+	}
+	if(in_read->tipoFile != 'r'){	//must be a file to write on
+		perror("not valid tipoFile");
+		return -1;
+		}
+	
+	
+	//scrittura su blocco
+	
+	int limit;	//quanto puo entrare nel blocco considerando l header 
+	unsigned char is_ffb;	//boolean per sapere se siamo nel primo blocco
+	if(f->current_block->block_in_file==0){ //abbiamo un fcb e siamo quindi in ffb
+		limit=BLOCK_SIZE - sizeof(BlockHeader)-sizeof(FileControlBlock);
+		is_ffb=TRUE;
+	}
+	else{
+		limit=BLOCK_SIZE - sizeof(BlockHeader);
+		is_ffb=FALSE;
+	}
+	
+	FileBlock* fbw= malloc(sizeof(FileBlock)); 	//alloco blocco che scriverò
+	FirstFileBlock* ffbw= malloc(sizeof(FirstFileBlock));;
+	void* dest; 
+	char* d_data;
+	if(is_ffb){	//parto dal primo blocco
+		dest=ffbw;
+		d_data=ffbw->data;
+		ffbw=f->ffb;	//prendo direttamente il ffb dall handle
+		}
+	
+	else{	//non parto dal primo blocco
+		dest=fbw;
+		d_data=fbw->data;
+		fbw->header= *(f->current_block);
+	}
+	
+	int num_blocks_to_write=0; //num blocchi su cui scriverò
+	int data_block_num=f->current_block->block_in_file;	//block num per la funz.
+	int bytes_written=0;
+	
+	
+	//Se mi basta sostituire un blocco solo
+	if(size <= limit ){	
 
-// writes in the file, at current position size bytes stored in data
-// overwriting and allocating new space if necessary
+		memcpy(d_data,data,size);
+		if(DiskDriver_writeBlock(f->sfs->disk,dest,data_block_num) < 0){
+			perror("cannot write block");
+			return -1;
+		}
+		bytes_written=size;
+	}
+	
+	
+	//Se ho più blocchi su cui devo scrivere (almeno 2)
+	else{	
+		
+		if(is_ffb)
+			num_blocks_to_write= ceil( (double)( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )
+			/(BLOCK_SIZE- sizeof(BlockHeader)) ) + 1;	//conto i sotto blocchi
+		else
+			num_blocks_to_write= size/(BLOCK_SIZE-sizeof(BlockHeader) )+ 1;	//conto i sotto blocchi
+		int new_size=BLOCK_SIZE-sizeof(BlockHeader);	//devo scrivere l intero blocco
+		int i=0;
+		while(i < num_blocks_to_write){
+			if(i == num_blocks_to_write-1) // ultimo blocco da scrivere
+				new_size=size - bytes_written;
+			
+			//carico il blocco, mi muovo di new_size in new_size sul data
+			//fornito e scrivo sempre new_size su fwb->data tranne per ultimo blocco
+			if(DiskDriver_writeBlock(f->sfs->disk,dest,data_block_num) < 0){
+				perror("cannot write block");
+				return -1;
+			}
+			memcpy(d_data,data+bytes_written,new_size);
+
+			bytes_written+=new_size;
+			if(i == num_blocks_to_write-1) break;	//ho scritto l ultimo
+			
+			//preparo il blockHeader per il prossimo blocco
+			FileBlock* fbr=malloc(sizeof(FileBlock));
+			ret= DiskDriver_readBlock(f->sfs->disk,fbr,
+						f->current_block->next_block);	//file block letto
+			if(ret< 0){
+				perror("errore in readblock di write simple fs");
+				return -1;
+				}
+			
+			memcpy(&fbw->header,&fbr->header,sizeof(BlockHeader)); //ho preso l head del blocco successivo
+			
+			free(fbr);	//free di fbr puo causare  seg_fault
+			data_block_num=fbr->header.block_in_file;
+			
+			i++;
+			}
+		}
+	
+		//aggiornamento inode
+		
+		in_read->dataUltimaModifica=time(NULL);
+		ret= DiskDriver_writeInode(f->sfs->disk,in_read,f->inode);
+		if(ret < 0){
+			perror("erorre write inode in write simplefs");
+			return -1;
+			}
+			
+		free(in_read);
+		free(ffbw);
+		free(fbw); 
+		
+		return bytes_written;
+	}
+
+
+
+
+
+
+// read in the file, at current position size bytes and store them in data
 // returns the number of bytes read
-int SimpleFS_read(FileHandle* f, void* data, int size);
+int SimpleFS_read(FileHandle* f, void* data, int size){
+	
+	if(f==NULL || f->ffb ==NULL){
+		perror("not valid file");
+		return -1;
+		}	
+	//read the inode info of the file
+	Inode* in_read=malloc(sizeof(Inode));
+	int in_block_num=f->inode ; //index for inode block
+	
+	if(DiskDriver_readInode(f->sfs->disk,in_read,in_block_num ) < 0 ){
+		perror("errore read inode for read");
+		return -1;
+	}
+	if(in_read->tipoFile != 'r'){
+		perror("not valid tipoFile");
+		return -1;
+		}
+		
+	//read the file blocks of the file
+	int limit,ret;
+	unsigned char is_ffb;
+	void* dest;
+	char* d_data;
+	FileBlock* fb_to_r= malloc(sizeof(FileBlock));
+	FirstFileBlock* ffb_to_r= malloc(sizeof(FirstFileBlock));
+	if(f->current_block->block_in_file==0){
+		is_ffb=TRUE;
+		limit=BLOCK_SIZE - sizeof(BlockHeader)-sizeof(FileControlBlock);
+		dest=ffb_to_r;
+		d_data=ffb_to_r->data;
+	 }
+	else{
+		is_ffb=FALSE;
+		limit=BLOCK_SIZE - sizeof(BlockHeader);
+		dest=fb_to_r;
+		d_data=fb_to_r->data;
+	}
+	
+	int data_block_num=f->current_block->block_in_file;
+	int bytes_read=0;	
+	
+	// Se mi basta leggere in un solo blocco 
+	int num_blocks_to_read=1;
+	if(size <= limit){
+		if(DiskDriver_readBlock(f->sfs->disk,dest,data_block_num) < 0){
+			perror("cannot read block");
+			return -1;
+		}
+		memcpy(data,d_data,size);
+		bytes_read = size;
+	}
+	
+	// Se ho piu blocchi da dover leggere
+	else{
+		if(is_ffb)
+			num_blocks_to_read= ceil((double) ( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )
+			/(BLOCK_SIZE- sizeof(BlockHeader)) ) + 1;
+		else
+			num_blocks_to_read= size/(BLOCK_SIZE-sizeof(BlockHeader) )+ 1;	//conto i sotto blocchi
+		
+		int new_size=BLOCK_SIZE-sizeof(BlockHeader);	//devo scrivere l intero blocco
+		int i=0;
+		while(i < num_blocks_to_read){
+			if(i == num_blocks_to_read-1) // ultimo blocco da scrivere
+				new_size=size - bytes_read;
+			
+			//carico il blocco, mi muovo di new_size in new_size sul data
+			//fornito e scrivo sempre new_size su fwb->data tranne per ultimo blocco
+			
+			if(DiskDriver_readBlock(f->sfs->disk,dest,data_block_num) < 0){
+				perror("cannot write block");
+				return -1;
+			}
+			memcpy(data+bytes_read,d_data,new_size);
+			
+			bytes_read+=new_size;
+			if(i == num_blocks_to_read-1) break;	//ho scritto l ultimo
+			
+			//preparo il blockHeader per il prossimo blocco
+			FileBlock* fbr=malloc(sizeof(FileBlock));
+			ret= DiskDriver_readBlock(f->sfs->disk,fbr,
+						f->current_block->next_block);	//file block letto
+			if(ret< 0){
+				perror("errore in readblock di write simple fs");
+				return -1;
+				}
+			
+			memcpy(&fb_to_r->header,&fbr->header,sizeof(BlockHeader)); //ho preso l head del blocco successivo
+			
+			free(fbr);	//free di fbr puo causare  seg_fault
+			data_block_num=fbr->header.block_in_file;
+			
+			i++;
+			}
+		}
+	
+	
+	//data_block_num=f->current_block->next_block;
+	//if(data_block_num < 0)	//reached end of the file
+
+	
+	
+	//update inode info of the file
+	in_read->dataUltimoAccesso=time(NULL);	//update ultimo accesso
+	if(DiskDriver_writeInode(f->sfs->disk,in_read,in_block_num) <0){
+		perror("updating inode failed");
+		return -1;
+	}
+	
+	free(in_read);
+	free(ffb_to_r);
+	free(fb_to_r);
+	
+	
+	return bytes_read;
+	}
 
 // returns the number of bytes read (moving the current pointer to pos)
 // returns pos on success
 // -1 on error (file too short)
-int SimpleFS_seek(FileHandle* f, int pos);
+int SimpleFS_seek(FileHandle* f, int pos){
+	/*
+	 pos in file, ex:    dove [...]=blocco di 512 B , H1=header, H2=fcb, ***= data
+	file:	{ [H1|H2|***] [H1|***] [H1|***] [H1|***]  ...}
+												 ^pos
+	*/						
+							 
+	int ret=0,bytes_read=0;
+	if(f==NULL || f->ffb ==NULL){
+		perror("not valid file");
+		return -1;
+		}
+	
+	if(pos < 0){
+		perror("negative position");
+		return -1;
+		}
+
+	
+	//Mi prendo l' inode per sapere la dimensione del file e altre info metadata
+	Inode* inode=malloc(sizeof(Inode));
+	ret=DiskDriver_readInode(f->sfs->disk,inode,f->inode);					 
+	if(ret < 0) return -1;
+	
+	if( pos > inode->dimensioneFile ){
+		perror("file too short");
+		return -1;
+		}
+		
+	FileBlock* fbr=malloc(sizeof(FileBlock));
+	FirstFileBlock* ffbr=malloc(sizeof(FirstFileBlock));
+		
+	//In quale blocco è pos?
+	int num_block,payload1_bytes= BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock);	//payload in ffb
+	int payload2_bytes= BLOCK_SIZE-sizeof(BlockHeader);
+	
+	if(pos < payload1_bytes){
+		num_block=1;	// è nel ffb
+	}
+	else if (pos== payload1_bytes){
+		num_block=2;	//è nel secondo blocco
+	}
+	else{
+		num_block= ceil( (pos - payload1_bytes)/payload2_bytes );	//è in uno dei successivi blocchi
+	}
+	
+	if(num_block==1){
+		ret=DiskDriver_readBlock(f->sfs->disk,ffbr,num_block);
+		if(ret <0) return -1;
+		f->current_block= &(ffbr->header);
+	}
+	else{
+		ret=DiskDriver_readBlock(f->sfs->disk,fbr,num_block);
+		if(ret <0) return -1;
+		f->current_block= &(fbr->header);
+	}
+	
+	f->pos_in_file=pos;    
+	bytes_read=pos;	//correct ?
+	
+	inode->dataUltimoAccesso=time(NULL);
+	if(DiskDriver_writeInode(f->sfs->disk,inode,f->inode) < 0){
+		perror("updating inode failed");
+		return -1;
+	}
+	
+	free(ffbr);
+	free(fbr);
+	free(inode);
+	
+	return bytes_read;
+	}
 
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
@@ -306,7 +683,72 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname);
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
 // -1 on error
-int SimpleFS_mkDir(DirectoryHandle* d, char* dirname);
+int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
+	BitMap* bitmapInode=malloc(sizeof(BitMap));
+	BitMap* bitmapData=malloc(sizeof(BitMap));
+	bitmapInode->num_bits = d->sfs->disk->header->inodemap_blocks;
+	bitmapInode->entries = d->sfs->disk->bitmap_inode_values;
+	bitmapData->num_bits = d->sfs->disk->header->bitmap_blocks;
+	bitmapData->entries = d->sfs->disk->bitmap_data_values;
+	Inode* inode;
+	int indexInode;
+	int indexData;
+	FirstDirectoryBlock* firstDirectoryBlock;
+	if ( d->sfs->disk->header->inodeFree_blocks > 0 ) {
+		indexInode=d->sfs->disk->header->inodeFirst_free_block;
+		if (d->sfs->disk->header->dataFree_blocks>0) {
+			indexData= d->sfs->disk->header->dataFirst_free_block;
+
+			inode = (Inode*)malloc(sizeof(Inode));
+			inode->permessiAltri = 7;
+			inode->permessiUtente = 7;
+			inode->permessiGruppo = 7;
+			inode->idUtente = 0;
+			inode->idGruppo = 0;
+			inode->dataCreazione = time(NULL);
+			inode->dataUltimoAccesso = inode->dataCreazione;
+			inode->dataUltimaModifica = inode->dataCreazione;
+			inode->dimensioneFile = 0;
+			inode->dimensioneInBlocchi = 1;
+			inode->tipoFile = 'd';
+			inode->primoBlocco = indexData;
+
+			firstDirectoryBlock=malloc(sizeof(FirstDirectoryBlock));
+
+			firstDirectoryBlock->header.block_in_file=0;
+			firstDirectoryBlock->header.next_block=-1;
+			firstDirectoryBlock->header.previous_block=-1;
+			
+			firstDirectoryBlock->num_entries=0;
+
+			firstDirectoryBlock->fcb.parent_inode=d->inode;
+			firstDirectoryBlock->fcb.block_in_disk=indexData;
+			strncpy(firstDirectoryBlock->fcb.name, dirname, 128);
+			memset(firstDirectoryBlock->file_inodes, -1, (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) );
+
+			if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode)!= -1 ) {
+				if (DiskDriver_writeBlock(d->sfs->disk, (void*)firstDirectoryBlock, indexData) !=-1) {
+					return 0;
+
+
+				}
+
+			}
+
+			else {
+				fprintf(stderr, "Errore durante la scrittura dell'inode\n");
+				return -1;
+			}
+			
+
+
+
+		}
+
+	}
+	return -1; 
+
+}
 
 // removes the file in the current directory
 // returns -1 on failure 0 on success

@@ -174,7 +174,16 @@ int main(int agc, char** argv) {
 	printf("Number entities: %d\n", toplevel->fdb->num_entries);
 	printf("Name of folder: %s\n", toplevel->fdb->fcb.name);
 	printf("Create new file called pippo.txt\n");
-	SimpleFS_createFile(toplevel, "pippo.txt");
+	FileHandle* hf=malloc(sizeof(hf));
+	hf=SimpleFS_createFile(toplevel, "pippo.txt");
+	if(hf==NULL)
+		perror("hf null");
+	hf=SimpleFS_openFile(toplevel,"pippo.txt");
+	if(hf==NULL)
+		perror("hf null");
+	//printf("Text of simplefs_write: %d",SimpleFS_write(??,"writingTextString007",20) );
+	char buf[20];
+	//printf("Text of simplefs_read: %d",SimpleFS_read(??,buf,20) );
 	
  // #endif
 }
