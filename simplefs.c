@@ -3,8 +3,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <math.h>
+#include <assert.h>
 #include "disk_driver.h"
 #include "simplefs.h"
+
 
 #define TRUE 1
 #define FALSE 0
@@ -882,6 +884,104 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 	return -1; 
 
 }
+/*
+ * 		file == foglia, eliminazione ricorsiva
+ * 
+ * 		
+ * 					[/] (root)
+ * 					/     \
+				   /       \
+ * 	{[f1] [/a1/b1] [f2]}    {[f1] [/a2/b1] [f2]}
+ * 							        /
+ * 							       /
+ * 					{[f1] [/a2/b1/c1] [f2]}
+ * 									/
+ * 									...
+ * 
+ * Se chiamo remove su current dir. /a2 devo eliminare ric. tutti i suoi figli (dir comprese)
+ * 
+ * 
+*/
+//remove the file specified with its blocks
+//returns -1 error, 0 on success
+static int single_remove(SimpleFS* fs,FirstFileBlock* ffb,Inode* inode){
+	int ret;
+	ret=DiskDriver_freeBlock(fs->disk,inode->primoBlocco);
+	if(ret<0) return -1;
+	FileBlock* fb;
+	int next_b=ffb->header.next_block;
+	while(next_b != -1){ //se il file ha piu di un blocco ,li cancello tutti
+			fb=malloc(sizeof(FileBlock));
+			//libero il next_b-esimo blocco del file
+			ret=DiskDriver_freeBlock(fs->disk,next_b);
+			if(ret<0) return -1;
+			//passo al prox
+			next_b=fb->header.next_block;
+			free(fb);
+			
+		}
+	return 0;
+}
+
+//removes all the childs of fdbr (both r files and d files)
+//returns 0 on success, -1 otherwise
+static int rec_remove(SimpleFS* fs,FirstDirectoryBlock* fdbr,Inode* inode,int num_removed){
+	int ret;
+	//num_removed= r_remove(fs,fdbr->file_inodes);
+	//if(num_removed < 0) return -1;
+	int limit= (BLOCK_SIZE
+		   -sizeof(BlockHeader)
+		   -sizeof(FileControlBlock)
+		    -sizeof(int))/sizeof(int);
+	
+	if(fdbr==NULL)
+		return num_removed;
+	Inode* in;
+	DirectoryBlock* dbr=malloc(sizeof(DirectoryBlock));
+	FirstFileBlock* ffb;
+	int i,j,n_block=0;
+	for(j=0;n_block>=0;j++){
+		
+		for(i=0;i<limit;i++){
+			if(fdbr->file_inodes[i] < 0)
+				break;
+			in=malloc(sizeof(Inode));
+			ret=DiskDriver_readInode(fs->disk,in,fdbr->file_inodes[i]);
+			if(ret<0) return -1;
+			if(in->tipoFile=='r'){	//è un file e va eliminato
+				ffb=malloc(sizeof(FirstFileBlock));
+				ret=DiskDriver_readBlock(fs->disk,ffb,in->primoBlocco);
+				if(ret<0) return -1;
+				ret=single_remove(fs,ffb,in);
+				free(ffb);
+				if(ret<0) return -1;
+				num_removed++;
+			}
+			else if (in->tipoFile=='d'){	//dfs ricorsiva per cancellazione sotto cartelle e sottofile
+				ret=DiskDriver_readBlock(fs->disk,fdbr,in->primoBlocco);
+				rec_remove(fs,fdbr,in,num_removed);
+				ret=DiskDriver_freeBlock(fs->disk,in->primoBlocco);
+				if(ret<0) return -1;
+				}
+			else
+				return -1;
+			
+			free(in);
+		}
+		if(j==0){
+			n_block=fdbr->header.next_block;
+			}
+		else
+		{
+			ret=DiskDriver_readBlock(fs->disk,dbr,n_block);	
+			if(ret<0) return -1;
+			n_block=dbr->header.next_block;
+		}	
+	}
+	free(dbr);
+	return num_removed;
+	}
+
 
 // Funzione ausiliare per inserire gli inode nelle directory ( ricercando un -1 da poter rimpiazzare )
 // Se un blocco è pieno si necessita un nuovo blocco DirectoryBlock che si crea
@@ -912,7 +1012,96 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 // removes the file in the current directory
 // returns -1 on failure 0 on success
 // if a directory, it removes recursively all contained files
-int SimpleFS_remove(SimpleFS* fs, char* filename);
+// if a file removes simply that file
+int SimpleFS_remove(SimpleFS* fs, char* filename){
+	int ret;
+	if (fs==NULL || fs->disk==NULL){
+		perror("fs not valid, field(s) not found");
+		return -1;
+		}
+	int in_index=fs->current_directory_inode;
+	assert(in_index >= 0);
+	
+	Inode* inode=malloc(sizeof(Inode));
+	ret= DiskDriver_readInode(fs->disk,inode,in_index);	//leggo l' inode della cur. dir.
+	if(ret<0) return -1;
+	
+	assert(inode->tipoFile=='d');
+	
+	//prendo l' indice del primo blocco di tipo FirstDirectoryBlock 
+	int block_index=inode->primoBlocco;
+
+	//parto dal primo blocco (per forza FirstDirectory perche cur. dir è una dir)
+	FirstDirectoryBlock* fdbr=malloc(sizeof(FirstDirectoryBlock));
+	ret=DiskDriver_readBlock(fs->disk,fdbr,block_index);	// leggo il primo blocco dir. della cur dir
+	if(ret<0) return -1;
+	
+	
+	//scorro la dir. corrente per vedere se trovo il file con name filename e se è un file o una dir
+	int i,j,limit;
+	limit= (BLOCK_SIZE
+		   -sizeof(BlockHeader)
+		   -sizeof(FileControlBlock)
+		    -sizeof(int))/sizeof(int);
+	
+	FirstFileBlock* ffb;
+	DirectoryBlock* dbr=malloc(sizeof(DirectoryBlock));
+	unsigned char found_file=FALSE;
+	int n_block=0;
+	for(j=0;n_block >= 0;j++){	//scorro tutti i blocchi della directory
+		for(i=0;i<limit;i++){	//scorro tutti i file_inodes[] nel blocco
+			if(j==0){ //è fdbr
+				if(fdbr->file_inodes[i] <0 ) break;
+				ret=DiskDriver_readInode(fs->disk,inode,fdbr->file_inodes[i]);	//inode overwritten
+				n_block=fdbr->header.next_block;
+			}
+			else{ //è dbr
+				if(dbr->file_inodes[i] <0 ) break;
+				ret=DiskDriver_readInode(fs->disk,inode,dbr->file_inodes[i]); //inode overwritten
+				n_block=dbr->header.next_block;
+			}
+			if(ret<0) return -1;
+			if(inode->tipoFile=='r'){ //è un file
+				ffb=malloc(sizeof(FirstFileBlock));
+				ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
+				if(strcmp(ffb->fcb.name,filename)==0){	//trovato il file e basta rimuoverlo
+					single_remove(fs,ffb,inode);
+					found_file=TRUE;
+					break;
+					}
+				free(ffb);
+			}
+			else if (inode->tipoFile=='d'){	//è una dir
+				FirstDirectoryBlock* fdb= malloc(sizeof(FirstDirectoryBlock));
+				ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+				if(ret<0) return -1;
+				if(strcmp(fdb->fcb.name,filename)==0){	//trovata la dir con name filename , eliminaz. ricorsiva
+					rec_remove(fs,fdb,inode,0);
+					found_file=TRUE;
+					break;
+					}
+				free(fdb);
+				}
+			else{
+				perror("not recognized tipoFile");
+				return -1;
+				}
+				
+		}
+		if(found_file)
+			break;
+		ret=DiskDriver_readBlock(fs->disk,dbr,n_block);	//continuo la ricerca su altri blocchi (carico dbr)
+	}
+	if(!found_file){
+		fprintf(stderr,"File to remove: %s not found",filename);
+		return -1;
+			}
+	free(dbr);
+	free(inode);
+	free(fdbr);
+	return 0;
+	
+	}
 
 
   
