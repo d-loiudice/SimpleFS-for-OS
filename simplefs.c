@@ -176,17 +176,19 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	int indexData;
 	int i = 0;
 	int exist = 0;
+	int dimensioneArray = d->fdb->num_entries;
 	// Inizializzaizone per registrare i nomi della directory
 	char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
 	i = 0;
-	while ( i < d->fdb->num_entries )
+	while ( i < dimensioneArray )
 	{
 		contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
 		i++;
 	}
+	fprintf(stderr, "SimpleFS_createFile() -> allocato array con dimensione %d\n", dimensioneArray);
 	SimpleFS_readDir(contenutoDirectory, d);
 	i = 0;
-	while ( i < d->fdb->num_entries )
+	while ( i < dimensioneArray )
 	{
 		if (strncmp(filename, contenutoDirectory[i], 128) == 0 )
 		{
@@ -256,12 +258,14 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 						fileHandle->inode = indexInode;
 						fileHandle->current_block = &(firstFileBlock->header);
 						fileHandle->pos_in_file  = 0;
-						// Aggiorno la struttura dati della cartella in cui ho creato il file
-						d->fdb->num_entries = d->fdb->num_entries + 1;
+
 						// Inserisco l'inode nuovo nei file_inodes della cartella dove è stato creato il file
 						if ( SimpleFS_insertInodeInDirectory(d, indexInode) != -1 )
 						{
 							// OK 
+							// Aggiorno la struttura dati della cartella in cui ho creato il file
+							d->fdb->num_entries = d->fdb->num_entries + 1;
+							fprintf(stderr, "SimpleFS_createFile() -> Ora ci sono %d files\n", d->fdb->num_entries);
 						}
 						else
 						{
@@ -292,6 +296,22 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	{
 		fprintf(stderr, "SimpleFS_createFile -> File già esistente\n");
 	}
+	
+	// Dealloco la struttura per memorizzare i nomi dei file contenuti nella cartella
+	//char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
+	fprintf(stderr, "SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file\n");
+	i = 0;
+	//int dimensione = ((fileHandle == NULL ) ? d->fdb->num_entries : d->fdb->num_entries-1);
+	fprintf(stderr, "SimpleFS_createFile() -> Numero nomi file: %d\n", dimensioneArray);
+	while ( i < dimensioneArray )
+	{
+		//fprintf(stderr, "SimpleFS_createFile() -> Dealloco posizione %d\n", i);
+		free(contenutoDirectory[i]);
+		//fprintf(stderr, "SimpleFS_createFile() -> Deallocato posizione %d\n", i);
+		i++;
+	}
+	free(contenutoDirectory);
+	fprintf(stderr, "SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file\n");	
 	return fileHandle;
 }
 // reads in the (preallocated) blocks array, the name of all files in a directory 
@@ -310,11 +330,13 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 	DirectoryBlock* directory;  // Cartella utilizzata per memorizzare i DirectoryBlock successivi
 	Inode* inodeRead;
 	void* blockRead;
+	fprintf(stderr, "SimpleFS_readDir() -> numero files nella cartella = %d\n", d->fdb->num_entries);
 	while ( blockHeader != NULL && indexNames < d->fdb->num_entries )
 	{
 		// Se è il FirstDirectoryBlock ho la possibilità di avere (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) files
 		if ( blockHeader->block_in_file == 0 )
 		{
+			fprintf(stderr, "SimpleFS_readDir() -> sono nel FirstDirectoryBlock\n");
 			dimension = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
 			indexFiles = 0;
 			// Ho già il FirstDirectoryBlock allocato
@@ -323,7 +345,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 				// Se effettivamente è presente un indice inode valido relativo al file...
 				if ( d->fdb->file_inodes[indexFiles] != -1 )
 				{
-					fprintf(stderr, "SimpleFS_readDir() -> inode letto: %d\n", d->fdb->file_inodes[indexFiles]);
+					//fprintf(stderr, "SimpleFS_readDir() -> inode letto: %d\n", d->fdb->file_inodes[indexFiles]);
 					//fprintf(stderr, "SimpleFS_readDir() -> indexFiles negli inode: %d\n", indexFiles);
 					// ... Ottengo l'inode e successivamente il FirstFileBlock/FirstDirectoryBlock indicato dall'inode acquisito
 					// e da esso leggo il nome del file contenuto nel FileControlBlock
@@ -333,8 +355,8 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 						//fprintf(stderr, "Dimensione inode: %d", sizeof(Inode));
 						fprintf(stderr, "SimpleFS_readDir -> letto dal disco l'inode\n");
 						fprintf(stderr, "SimpleFS_readDir -> primo blocco dell'inode: %d\n", inodeRead->primoBlocco);
-						/*fprintf(stderr, "SimpleFS_readDir -> permessiUtente dell'inode: %d\n", inodeRead->permessiUtente);
-						fprintf(stderr, "SimpleFS_readDir -> permessiGruppo dell'inode: %d\n", inodeRead->permessiGruppo);
+						//fprintf(stderr, "SimpleFS_readDir -> permessiUtente dell'inode: %d\n", inodeRead->permessiUtente);
+						/*fprintf(stderr, "SimpleFS_readDir -> permessiGruppo dell'inode: %d\n", inodeRead->permessiGruppo);
 						fprintf(stderr, "SimpleFS_readDir -> permessiAltri dell'inode: %d\n", inodeRead->permessiAltri);
 						fprintf(stderr, "SimpleFS_readDir -> idutente dell'inode: %d\n", inodeRead->idUtente);
 						fprintf(stderr, "SimpleFS_readDir -> idGruppo dell'inode: %d\n", inodeRead->idGruppo);
@@ -348,12 +370,13 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 							if ( inodeRead->tipoFile == 'd' )
 							{
 								//fprintf(stderr, "SimpleFS_readDir -> letto dal disco l'inode\n");
-								fprintf(stderr, "SimpleFS_readDir() -> %s\n", ((FirstDirectoryBlock*)blockRead)->fcb.name);
+								fprintf(stderr, "SimpleFS_readDir() -> %s in posizione %d\n", ((FirstDirectoryBlock*)blockRead)->fcb.name, indexNames);
 								strncpy(names[indexNames], ((FirstDirectoryBlock*)blockRead)->fcb.name, 128);
 							}
 							else
 							{
-								fprintf(stderr, "SimpleFS_readDir() -> %s\n", ((FirstFileBlock*)blockRead)->fcb.name);
+								//fprintf(stderr, "SimpleFS_readDir -> letto dal disco l'inode\n");
+								fprintf(stderr, "SimpleFS_readDir() -> %s in posizione %d\n", ((FirstFileBlock*)blockRead)->fcb.name, indexNames);
 								strncpy(names[indexNames], ((FirstFileBlock*)blockRead)->fcb.name, 128);
 							}
 							indexNames = indexNames + 1;
@@ -380,6 +403,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 		// Altrimenti è il Directory Block quindi avrò al massimo (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int) files
 		else
 		{
+			fprintf(stderr, "SimpleFS_readDir() -> sono nel DirectoryBlock\n");
 			dimension = (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int);
 			indexFiles = 0;
 			// Ho già il DirectoryBlock allocato in directory
@@ -388,22 +412,31 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 				// Se effettivamente è presente un indice inode valido relativo al file...
 				if ( directory->file_inodes[indexFiles] != -1 )
 				{
+					fprintf(stderr, "SimpleFS_readDir() -> Nel DirectoryBlock in posizione %d c'è un inode valido\n", indexFiles);
 					// ... Ottengo l'inode e successivamente il FirstFileBlock/FirstDirectoryBlock indicato dall'inode acquisito
 					// e da esso leggo il nome del file contenuto nel FileControlBlock
 					inodeRead = (Inode*)malloc(sizeof(Inode));
-					if ( DiskDriver_readInode(d->sfs->disk, inodeRead ,d->fdb->file_inodes[indexFiles]) != -1 )
+					//if ( DiskDriver_readInode(d->sfs->disk, inodeRead ,d->fdb->file_inodes[indexFiles]) != -1 )
+					if ( DiskDriver_readInode(d->sfs->disk, inodeRead, directory->file_inodes[indexFiles]) != -1 )
 					{
+						fprintf(stderr, "SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode %d\n", directory->file_inodes[indexFiles]);
 						// Se è una cartella alloco un FirstDirectoryBlock, altrimenti un FirstFileBlock
 						blockRead = (inodeRead->tipoFile == 'd' ? malloc(sizeof(FirstDirectoryBlock)) : malloc(sizeof(FirstFileBlock)));
 						if ( DiskDriver_readBlock(d->sfs->disk, blockRead ,inodeRead->primoBlocco) != -1 )
 						{
+							fprintf(stderr, "SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco %d\n", inodeRead->primoBlocco);
+							fprintf(stderr, "SimpleFS_readDir() -> Leggo il nome file numero %d\n", indexNames);
 							if ( inodeRead->tipoFile == 'd' )
 							{
+								fprintf(stderr, "SimpleFS_readDir() -> nome cartella = %s da mettere nella posizione %d\n", ((FirstDirectoryBlock*)blockRead)->fcb.name, indexNames);
 								strncpy(names[indexNames], ((FirstDirectoryBlock*)blockRead)->fcb.name, 128);
+								fprintf(stderr, "SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella\n");
 							}
 							else
 							{
+								fprintf(stderr, "SimpleFS_readDir() -> nome file = %s da mettere nella posizione %d\n", ((FirstFileBlock*)blockRead)->fcb.name, indexNames);
 								strncpy(names[indexNames], ((FirstFileBlock*)blockRead)->fcb.name, 128);
+								fprintf(stderr, "SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella\n");
 							}
 							indexNames = indexNames + 1;
 						}
@@ -422,9 +455,11 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 		if ( indexBloccoAttuale != -1 )
 		{
 			// ... lo leggo
+			fprintf(stderr, "SimpleFS_readDir() -> Prossimo blocco = %d\n", indexBloccoAttuale);
 			directory = (DirectoryBlock*) malloc(sizeof(DirectoryBlock));
 			if ( DiskDriver_readBlock(d->sfs->disk, directory, indexBloccoAttuale) != -1 )
 			{
+				fprintf(stderr, "SimpleFS_readDir() -> Primo indice inode all'interno del nuovo blocco = %d\n", directory->file_inodes[0]);
 				// Estraggo il Blockheader e lo memorizzo nella DirectoryHandle (mi conviene?)
 				free(blockHeader);
 				blockHeader = (BlockHeader*)malloc(sizeof(BlockHeader));
@@ -436,7 +471,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 			// Altrimenti non esiste alcun blocco successivo 
 			blockHeader = NULL;
 		}
-		indexNames = indexNames + 1;
+		//indexNames = indexNames + 1;
 	}
 	return 0;
 }
@@ -1024,6 +1059,7 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 	int ret = -1;
 	int dimension;
 	int indiceBloccoNuovo;
+	int i;
 	// Verifica che ci sia spazio nel FirstDirectoryBlock per inserire l'inode
 	dimension = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
 	while ( index < dimension && ret == -1)
@@ -1108,6 +1144,13 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 			nuovoDirectoryBlock->header.next_block = -1;
 			nuovoDirectoryBlock->header.block_in_file = indiceInBloccoPrecedente+1;
 			nuovoDirectoryBlock->file_inodes[0] = inode;
+			// Setto il resto degli inode a -1
+			i = 1;
+			while ( i < ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) )
+			{
+				nuovoDirectoryBlock->file_inodes[i] = -1;
+				i++;
+			}
 			// Ottengo il primo blocco libero
 			indiceBloccoNuovo = DiskDriver_getFreeBlock(d->sfs->disk, 0);
 			if ( indiceBloccoNuovo != -1 )
@@ -1124,6 +1167,7 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 						if ( DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk) != -1 )
 						{
 							// OK
+							fprintf(stderr, "SimpleFS_insertInodeInDirectory() -> Nuovo DirectoryBlock (il primo dopo il FirstDirectoryBlock creato in posizione %d\n", indiceBloccoNuovo);
 							ret = inode;
 						}
 						else
