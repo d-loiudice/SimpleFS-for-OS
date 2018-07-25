@@ -875,7 +875,29 @@ int SimpleFS_seek(FileHandle* f, int pos){
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
 // it does side effect on the provided handle
-int SimpleFS_changeDir(DirectoryHandle* d, char* dirname);
+int SimpleFS_changeDir(DirectoryHandle* d, char* dirname) {
+	char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
+	i = 0;
+	while ( i < d->fdb->num_entries ) {
+		contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
+		i++;
+	}
+	SimpleFS_readDir(contenutoDirectory, d);
+	int presente=0;
+	i=0;
+	while (i < d->fdb->num_entries) {
+		if (contenutoDirectory[i]==dirname) {
+			presente++;
+			break;
+		}
+	}
+	if (presente==0) {
+		printf("la cartella selezionata non è presente");
+		return -1;
+	}
+
+
+}
 
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
