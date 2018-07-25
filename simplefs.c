@@ -875,7 +875,208 @@ int SimpleFS_seek(FileHandle* f, int pos){
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
 // it does side effect on the provided handle
-int SimpleFS_changeDir(DirectoryHandle* d, char* dirname);
+int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
+{
+	int ret = -1;
+	char** contenutoDirectory;
+	int i;
+	//int trovato = -1;
+	BlockHeader* blockHeader = NULL;
+	DirectoryBlock* directoryBlock = NULL;
+	Inode* inodeRead = NULL;
+	FirstDirectoryBlock* fdbRead;
+	int dimensione;
+	int indexInode;
+	if ( strncmp(dirname, "..", 128) == 0 )
+	{
+		// Vado al livello superiore
+		// Verifico che la cartella in cui sono abbia un livello superiore
+		
+	}
+	else
+	{
+		// Inizializzaizone per registrare i nomi dei file della directory
+		/*contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
+		i = 0;
+		while ( i < d->fdb->num_entries )
+		{
+			contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
+			i++;
+		}
+		SimpleFS_readDir(contenutoDirectory, d);
+		
+		// Ricerca della directory dove andare nell'array
+		trovato = 0;
+		i = 0;
+		while ( i < d->fdb->num_entries && trovato == 0)
+		{
+			if ( strncmp(dirname, contenutoDirectory[i], 128) == 0 )
+			{
+				trovato = 1;
+			}
+			i++;
+		}
+		*/
+		
+		// Scorro tra i file inodes della cartella
+		blockHeader = (BlockHeader*)malloc(sizeof(BlockHeader));
+		// Inizializzo al valore del blockheader del fdb
+		memcpy(blockHeader, &(d->fdb->header), sizeof(BlockHeader));
+		while ( blockHeader != NULL && ret == -1 )
+		{
+			// Verifica che sia un FDB oppure un DB
+			if ( blockHeader->block_in_file == 0 )
+			{
+				// FDB
+				dimensione = (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int);
+				i = 0;
+				while ( i < dimensione && ret == -1)
+				{
+					// Verifica che ci sia un indice di inode valido
+					if ( d->fdb->file_inodes[i] != -1 )
+					{
+						// Leggo l'inode indicato
+						inodeRead = (Inode*) malloc(sizeof(Inode));
+						indexInode = d->fdb->file_inodes[i];
+						if ( DiskDriver_readInode(d->sfs->disk, inodeRead, indexInode) != -1 )
+						{
+							// Verifica che sia una cartella
+							if ( inodeRead->tipoFile == 'd' )
+							{
+								// Lettura del primo blocco indicato dall'inode
+								fdbRead = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
+								if ( DiskDriver_readBlock(d->sfs->disk, fdbRead, inodeRead->primoBlocco) != -1 )
+								{
+									// Leggo il nome del file
+									if ( strncmp(fdbRead->fcb.name, dirname, 128) == 0 )
+									{
+										fprintf(stderr, "SimpleFS_changeDir() -> Trovata la directory %s\n", fdbRead->fcb.name);
+										// Creazione directoryHandle o modifica? -> modifica
+										free(d->fdb);
+										d->fdb = fdbRead;
+										d->inode = indexInode;
+										d->current_block = &(fdbRead->header);
+										d->pos_in_dir = 0;
+										d->pos_in_block = 0;
+										ret = 0;
+										// OK
+									}
+								}
+								else
+								{
+									fprintf(stderr, "SimpleFS_changeDir() -> Errore durante la lettura del blocco %d indicato dall'inode\n", inodeRead->primoBlocco);
+								}
+								// Se ancora non ho trovato, libero la memoria. Altrimenti non la devo liberare perché sarà nella directoryHandle
+								if ( ret == -1 ) 
+								{
+									free(fdbRead);
+								}
+							}
+						}
+						else
+						{
+							fprintf(stderr, "SimpleFS_changeDir() -> Errore durante la lettura dell'inode %d\n", d->fdb->file_inodes[i]);
+						}
+						free(inodeRead);
+					}
+					i++;
+				}
+			}
+			else
+			{
+				// DB
+				dimensione = (BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int);
+				i = 0;
+				while ( i < dimensione && ret == -1) 
+				{
+					// Verifica che ci sia un indice di inode valido
+					if ( directoryBlock->file_inodes[i] != -1 )
+					{
+						// Leggo l'inode indicato
+						inodeRead = (Inode*) malloc(sizeof(Inode));
+						indexInode = directoryBlock->file_inodes[i];
+						if ( DiskDriver_readInode(d->sfs->disk, inodeRead, indexInode) != -1 )
+						{
+							// Verifica che sia una cartella
+							if ( inodeRead->tipoFile == 'd' )
+							{
+								// Lettura del primo blocco indicato dall'inode
+								fdbRead = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
+								if ( DiskDriver_readBlock(d->sfs->disk, fdbRead, inodeRead->primoBlocco) != -1 )
+								{
+									// Leggo il nome del file
+									if ( strncmp(fdbRead->fcb.name, dirname, 128) == 0 )
+									{
+										fprintf(stderr, "SimpleFS_changeDir() -> Trovata la directory %s\n", fdbRead->fcb.name);
+										// Creazione directoryHandle o modifica? -> modifica
+										free(d->fdb);
+										d->fdb = fdbRead;
+										d->inode = indexInode;
+										d->current_block = &(fdbRead->header);
+										d->pos_in_dir = 0;
+										d->pos_in_block = 0;
+										ret = 0;
+										// OK
+									}
+								}
+								else
+								{
+									fprintf(stderr, "SimpleFS_changeDir() -> Errore durante la lettura del blocco %d indicato dall'inode\n", inodeRead->primoBlocco);
+								}
+								// Se ancora non ho trovato, libero la memoria. Altrimenti non la devo liberare perché sarà nella directoryHandle
+								if ( ret == -1 ) 
+								{
+									free(fdbRead);
+								}
+							}
+						}
+						else
+						{
+							fprintf(stderr, "SimpleFS_changeDir() -> Errore durante la lettura dell'inode %d\n", d->fdb->file_inodes[i]);
+						}
+						free(inodeRead);
+					}
+					i++;
+				}
+			}
+			// Passo al blocco successivo
+			if ( blockHeader->next_block != -1 )
+			{
+				//free(blockHeader);
+				directoryBlock = (DirectoryBlock*) malloc(sizeof(DirectoryBlock));
+				// Leggo il blocco indicato in next_block
+				if ( DiskDriver_readBlock(d->sfs->disk, directoryBlock, blockHeader->next_block) != -1 )
+				{
+					// Mi copio il blockHeader
+					memcpy(blockHeader, &(directoryBlock->header), sizeof(BlockHeader));
+				}
+				else
+				{
+					fprintf(stderr, "SimpleFS_changeDir() -> Lettura blocco directoryBlock fallita a indice %d\n", blockHeader->next_block);
+				}
+			}
+			else
+			{
+				// Altrimenti setto NULL per uscire dal ciclo
+				free(blockHeader);
+				blockHeader = NULL;
+			}
+		}
+		
+		// Deallocazione array dei nomi dei file della directory
+		/*i = 0;
+		while ( i < d->fdb->num_entries )
+		{
+			//fprintf(stderr, "SimpleFS_createFile() -> Dealloco posizione %d\n", i);
+			free(contenutoDirectory[i]);
+			//fprintf(stderr, "SimpleFS_createFile() -> Deallocato posizione %d\n", i);
+			i++;
+
+		}*/
+	}
+	
+	return ret;
+}
 
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
@@ -925,7 +1126,10 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 
 			if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode)!= -1 ) {
 				if (DiskDriver_writeBlock(d->sfs->disk, (void*)firstDirectoryBlock, indexData) !=-1) {
-					return 0;
+					if (SimpleFS_insertInodeInDirectory(d, indexInode) != -1 ){
+						d->fdb->num_entries = d->fdb->num_entries+1;
+						return 0;
+					}
 
 
 				}

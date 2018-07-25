@@ -200,25 +200,27 @@ int main(int agc, char** argv) {
 	printf("Number max inode in FirstDirectoryBlock: %ld\n", (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int));
 	if(hf==NULL)
 		perror("hf null");
-	hf=SimpleFS_openFile(toplevel,"pippo.txt");
+	//hf=SimpleFS_openFile(toplevel,"pippo.txt");
 	if(hf==NULL)
 		perror("hf null");
-	printf("Text of simplefs_write: %d \n",SimpleFS_write(hf,"writingTextString007",20) );
+	//printf("Text of simplefs_write: %d \n",SimpleFS_write(hf,"writingTextString007",20) );
 	char buf[20];
-	printf("Text of simplefs_read: %d \n",SimpleFS_read(hf,buf,20) );
+	//printf("Text of simplefs_read: %d \n",SimpleFS_read(hf,buf,20) );
 	
 	ret=SimpleFS_seek(hf, 6);
 	if(ret<0) perror("err ret of seek \n");
-
+	printf("Mkdir: paolino => %d\n", SimpleFS_mkDir(toplevel, "paolino"));
+	printf("Changedir in nuovaDir %d\n", SimpleFS_changeDir(toplevel, "nuovaDir"));
+	printf("Changedir in paolino %d\n", SimpleFS_changeDir(toplevel, "paolino"));
 	//ret=SimpleFS_changeDir(toplevel, "directory");
 	//if(ret<0) perror("err ret of changeDir \n");
 
-	ret=SimpleFS_remove(fileSystem, "wow.txt");
+	/*ret=SimpleFS_remove(fileSystem, "wow.txt");
 	if(ret<0) perror("err ret of remove \n");
 
 	
 	ret=SimpleFS_close(hf);
-	if(ret<0) perror("err ret of close \n");
+	if(ret<0) perror("err ret of close \n");*/
 	
  // #endif
  
