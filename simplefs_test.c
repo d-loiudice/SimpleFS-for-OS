@@ -33,39 +33,29 @@ void bits_print(char* arr,int dim){
 int main(int agc, char** argv) {
   //#if DEBUG
 	  // prova di linking TODO da rimuovere 
-	  printf("INIZIO DEBUGGING FUNZIONI...\n");
-	  
-	  printf("----| diskDriver MODULE |----: \n");
-	  printf("\t init: void\n"); 
+	  printf("\t\tINIZIO DEBUGGING FUNZIONI...\n");
+	 
 
-	  //printf("read: %d \n\n",DiskDriver_readBlock(NULL,NULL,1) );
-
-
-// converts a bit to a linear index
-	//#if DEBUG
-	// prova di linking TODO da rimuovere 
-	printf("INIZIO DEBUGGING FUNZIONI...\n");
-
-	
+	int ret;
 	
 	//-------------------BITMAP TESTING-----------------------------------
 	
-	printf("DEBUGGING BITMAP...\n");
+	printf("\t--------------| DEBUGGING BITMAP |----------------------: \n");
 
 
 	// converts a bit to a linear index
 	int r1=BitMap_indexToBlock(2, 7);
-	printf("%d \n ",r1);
+	printf("BitMap_indexToBlock(2, 7): %d \n ",r1);
 	r1=BitMap_indexToBlock(2, 8);
-	printf("%d \n ",r1);
+	printf("BitMap_indexToBlock(2, 8): %d \n ",r1);
 
 
-
+	printf("Prova Bitmap vuote \n");
 	BitMap bm =BitMap_init();	//inizializza la bitmap, creando array (vuoto)
 	bits_print(bm.entries,10);
+	
 	BitMap* bmap = (BitMap*)malloc(sizeof(BitMap));
 	memcpy(bmap,&bm,sizeof(BitMap));
-
 	bits_print( bmap->entries,10);
 
 	//char* cc=calloc(sizeof(char),100);
@@ -73,7 +63,7 @@ int main(int agc, char** argv) {
 	//bits_print(cc,5);
 	// sets the bit at index pos in bmap to status
 	r1= BitMap_set(bmap, 270, 1);
-	printf("set %d \n ",r1);
+	printf(" BitMap_set(bmap, 270, 1): %d \n ",r1);
 
 	r1= BitMap_set(bmap, 2, 1);
 	printf("set %d \n ",r1);
@@ -92,7 +82,7 @@ int main(int agc, char** argv) {
 
 	//-------------------DISK_DRIVER TESTING-----------------------------------
 
-	printf("----| DEBUGGING DISK_DRIVER |----: \n");
+	printf("\t-----------------| DEBUGGING DISK_DRIVER |------------------------: \n");
 	//printf("\t init: void\n"); DiskDriver_init(NULL,"fileTest.txt",2);
 	/*
 	printf("\t readBlock: void\n"); DiskDriver_readBlock(disk, void* dest, int block_num);
@@ -102,7 +92,7 @@ int main(int agc, char** argv) {
 	printf("\t flush: void\n"); DiskDriver_flush(DiskDriver* disk);
 	*/
 	DiskDriver* dd = (DiskDriver*) malloc(sizeof(DiskDriver));
-	DiskDriver_init(dd,"fileTest",400);
+	DiskDriver_init(dd,"fileTest",50);
 	printf("--DISKHEADER--\n");
 	//printf("Test done on an expected new file, please delete the file created after each run\n");
 	printf("File descriptor: %d\n", dd->fd);
@@ -155,13 +145,13 @@ int main(int agc, char** argv) {
 	printf("Free data block in index 0 (value expected 0) => %d\n", DiskDriver_freeBlock(dd, 0));
 	printf("Free data block in index out of range (value expected -1) => %d\n", DiskDriver_freeBlock(dd, 113133));
 	printf("Get first free data block (value expected 0) => %d\n", DiskDriver_getFreeBlock(dd, 0));
-	
+	//printf("Lo si prende dal disk_header => %d \n",dd->header->dataFirst_free_block);
 	printf("Numero blocchi mappati dalla bitmap_inode: %d\n", dd->header->inodemap_blocks);
 	printf("--DISKDRIVER END--\n");
 
 	//-------------------SIMPLE_FS TESTING-----------------------------------
 
-	printf("----| DEBUGGING simplefs |----: \n");
+	printf("\t--------------------| DEBUGGING simplefs |------------------------: \n");
 	printf("FirstBlock size %ld\n", sizeof(FirstFileBlock));
 	printf("DataBlock size %ld\n", sizeof(FileBlock));
 	printf("FirstDirectoryBlock size %ld\n", sizeof(FirstDirectoryBlock));
@@ -177,7 +167,7 @@ int main(int agc, char** argv) {
 	printf("Directory Handle toplevel\n");
 	printf("Number entities: %d\n", toplevel->fdb->num_entries);
 	printf("Name of folder: %s\n", toplevel->fdb->fcb.name);
-	printf("Create new file called pippo.txt, wow.txt, pippo.txt, testare.al e altri 88 file and directory hello\n");
+	printf("Create new file called pippo.txt, wow.txt, pippo.txt, testare.al and directory hello\n");
 	FileHandle* hf=malloc(sizeof(hf));
 	hf=SimpleFS_createFile(toplevel, "pippo.txt");
 	SimpleFS_createFile(toplevel, "pippo.txt");
@@ -186,100 +176,8 @@ int main(int agc, char** argv) {
 		printf("Errore durante la creazione del file\n");
 	}*/
 	SimpleFS_createFile(toplevel, "wow.txt");
-	SimpleFS_createFile(toplevel, "testare.al1");
-	SimpleFS_createFile(toplevel, "testare.al2");
-	SimpleFS_createFile(toplevel, "testare.al3");
-	SimpleFS_createFile(toplevel, "testare.al4");
-	SimpleFS_createFile(toplevel, "testare.al5");
-	SimpleFS_createFile(toplevel, "testare.al6");
-	SimpleFS_createFile(toplevel, "testare.al7");
-	SimpleFS_createFile(toplevel, "testare.al8");
-	SimpleFS_createFile(toplevel, "testare.al9");
-	SimpleFS_createFile(toplevel, "testare.al10");
-	SimpleFS_createFile(toplevel, "testare.al11");
-	SimpleFS_createFile(toplevel, "testare.al12");
-	SimpleFS_createFile(toplevel, "testare.al13");
-	SimpleFS_createFile(toplevel, "testare.al14");
-	SimpleFS_createFile(toplevel, "testare.al15");
-	SimpleFS_createFile(toplevel, "testare.al16");
-	SimpleFS_createFile(toplevel, "testare.al17");
-	SimpleFS_createFile(toplevel, "testare.al18");
-	SimpleFS_createFile(toplevel, "testare.al19");
-	SimpleFS_createFile(toplevel, "testare.al20");
-	SimpleFS_createFile(toplevel, "testare.al21");
-	SimpleFS_createFile(toplevel, "testare.al22");
-	SimpleFS_createFile(toplevel, "testare.al23");
-	SimpleFS_createFile(toplevel, "testare.al24");
-	SimpleFS_createFile(toplevel, "testare.al25");
-	SimpleFS_createFile(toplevel, "testare.al26");
-	SimpleFS_createFile(toplevel, "testare.al27");
-	SimpleFS_createFile(toplevel, "testare.al28");
-	SimpleFS_createFile(toplevel, "testare.al29");
-	SimpleFS_createFile(toplevel, "testare.al30");
-	SimpleFS_createFile(toplevel, "testare.al31");
-	SimpleFS_createFile(toplevel, "testare.al32");
-	SimpleFS_createFile(toplevel, "testare.al33");
-	SimpleFS_createFile(toplevel, "testare.al34");
-	SimpleFS_createFile(toplevel, "testare.al35");
-	SimpleFS_createFile(toplevel, "testare.al36");
-	SimpleFS_createFile(toplevel, "testare.al37");
-	SimpleFS_createFile(toplevel, "testare.al38");
-	SimpleFS_createFile(toplevel, "testare.al39");
-	SimpleFS_createFile(toplevel, "testare.al40");
-	SimpleFS_createFile(toplevel, "testare.al41");
-	SimpleFS_createFile(toplevel, "testare.al42");
-	SimpleFS_createFile(toplevel, "testare.al43");
-	SimpleFS_createFile(toplevel, "testare.al44");
-	SimpleFS_createFile(toplevel, "testare.al45");
-	SimpleFS_createFile(toplevel, "testare.al46");
-	SimpleFS_createFile(toplevel, "testare.al47");
-	SimpleFS_createFile(toplevel, "testare.al48");
-	SimpleFS_createFile(toplevel, "testare.al49");
-	SimpleFS_createFile(toplevel, "testare.al50");
-	SimpleFS_createFile(toplevel, "testare.al51");
-	SimpleFS_createFile(toplevel, "testare.al52");
-	SimpleFS_createFile(toplevel, "testare.al53");
-	SimpleFS_createFile(toplevel, "testare.al54");
-	SimpleFS_createFile(toplevel, "testare.al55");
-	SimpleFS_createFile(toplevel, "testare.al56");
-	SimpleFS_createFile(toplevel, "testare.al57");
-	SimpleFS_createFile(toplevel, "testare.al58");
-	SimpleFS_createFile(toplevel, "testare.al59");
-	SimpleFS_createFile(toplevel, "testare.al60");
-	SimpleFS_createFile(toplevel, "testare.al61");
-	SimpleFS_createFile(toplevel, "testare.al62");
-	SimpleFS_createFile(toplevel, "testare.al63");
-	SimpleFS_createFile(toplevel, "testare.al64");
-	SimpleFS_createFile(toplevel, "testare.al65");
-	SimpleFS_createFile(toplevel, "testare.al66");
-	SimpleFS_createFile(toplevel, "testare.al67");
-	SimpleFS_createFile(toplevel, "testare.al68");
-	SimpleFS_createFile(toplevel, "testare.al69");
-	SimpleFS_createFile(toplevel, "testare.al70");
-	SimpleFS_createFile(toplevel, "testare.al71");
-	SimpleFS_createFile(toplevel, "testare.al72");
-	SimpleFS_createFile(toplevel, "testare.al73");
-	SimpleFS_createFile(toplevel, "testare.al74");
-	SimpleFS_createFile(toplevel, "testare.al75");
-	SimpleFS_createFile(toplevel, "testare.al76");
-	SimpleFS_createFile(toplevel, "testare.al77");
-	SimpleFS_createFile(toplevel, "testare.al78");
-	SimpleFS_createFile(toplevel, "testare.al79");
-	SimpleFS_createFile(toplevel, "testare.al80");
-	SimpleFS_createFile(toplevel, "testare.al81");
-	SimpleFS_createFile(toplevel, "testare.al82");
-	SimpleFS_createFile(toplevel, "testare.al83");
-	SimpleFS_createFile(toplevel, "testare.al84");
-	SimpleFS_createFile(toplevel, "testare.al85");
-	SimpleFS_createFile(toplevel, "testare.al86");
-	SimpleFS_createFile(toplevel, "testare.al87");
-	SimpleFS_createFile(toplevel, "testare.al88");
-	SimpleFS_createFile(toplevel, "testare.al89");
-	SimpleFS_createFile(toplevel, "testare.al90");
-	
-	printf("Fine creazione files\n");
-	
-	//SimpleFS_mkDir(toplevel, "directory");
+	SimpleFS_createFile(toplevel, "testare.al");
+	SimpleFS_mkDir(toplevel, "directory");
 	i=0;
 	//while ( i < 
 	
@@ -299,15 +197,29 @@ int main(int agc, char** argv) {
 		printf("Index %d : name = %s\n",i, contenutoDirectory[i]);
 		i++;
 	}
-	printf("Number max inode in FirstDirectoryBlock: %d\n", (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int));
+	printf("Number max inode in FirstDirectoryBlock: %ld\n", (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int));
 	if(hf==NULL)
 		perror("hf null");
 	hf=SimpleFS_openFile(toplevel,"pippo.txt");
 	if(hf==NULL)
 		perror("hf null");
-	//printf("Text of simplefs_write: %d",SimpleFS_write(??,"writingTextString007",20) );
+	printf("Text of simplefs_write: %d \n",SimpleFS_write(hf,"writingTextString007",20) );
 	char buf[20];
-	//printf("Text of simplefs_read: %d",SimpleFS_read(??,buf,20) );
+	printf("Text of simplefs_read: %d \n",SimpleFS_read(hf,buf,20) );
+	
+	ret=SimpleFS_seek(hf, 6);
+	if(ret<0) perror("err ret of seek \n");
+
+	//ret=SimpleFS_changeDir(toplevel, "directory");
+	//if(ret<0) perror("err ret of changeDir \n");
+
+	ret=SimpleFS_remove(fileSystem, "wow.txt");
+	if(ret<0) perror("err ret of remove \n");
+
+	
+	ret=SimpleFS_close(hf);
+	if(ret<0) perror("err ret of close \n");
 	
  // #endif
+ 
 }

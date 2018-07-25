@@ -309,7 +309,6 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 		free(contenutoDirectory[i]);
 		//fprintf(stderr, "SimpleFS_createFile() -> Deallocato posizione %d\n", i);
 		i++;
-
 	}
 	free(contenutoDirectory);
 	fprintf(stderr, "SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file\n");	

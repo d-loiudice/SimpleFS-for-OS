@@ -176,19 +176,17 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	int indexData;
 	int i = 0;
 	int exist = 0;
-	int dimensioneArray = d->fdb->num_entries;
 	// Inizializzaizone per registrare i nomi della directory
 	char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
 	i = 0;
-	while ( i < dimensioneArray )
+	while ( i < d->fdb->num_entries )
 	{
 		contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
 		i++;
 	}
-	fprintf(stderr, "SimpleFS_createFile() -> allocato array con dimensione %d\n", dimensioneArray);
 	SimpleFS_readDir(contenutoDirectory, d);
 	i = 0;
-	while ( i < dimensioneArray )
+	while ( i < d->fdb->num_entries )
 	{
 		if (strncmp(filename, contenutoDirectory[i], 128) == 0 )
 		{
@@ -258,14 +256,12 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 						fileHandle->inode = indexInode;
 						fileHandle->current_block = &(firstFileBlock->header);
 						fileHandle->pos_in_file  = 0;
-
+						// Aggiorno la struttura dati della cartella in cui ho creato il file
+						d->fdb->num_entries = d->fdb->num_entries + 1;
 						// Inserisco l'inode nuovo nei file_inodes della cartella dove è stato creato il file
 						if ( SimpleFS_insertInodeInDirectory(d, indexInode) != -1 )
 						{
 							// OK 
-							// Aggiorno la struttura dati della cartella in cui ho creato il file
-							d->fdb->num_entries = d->fdb->num_entries + 1;
-							fprintf(stderr, "SimpleFS_createFile() -> Ora ci sono %d files\n", d->fdb->num_entries);
 						}
 						else
 						{
@@ -295,21 +291,6 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	else
 	{
 		fprintf(stderr, "SimpleFS_createFile -> File %s già esistente in %s \n",filename,d->fdb->fcb.name);
-	}
-	
-	// Dealloco la struttura per memorizzare i nomi dei file contenuti nella cartella
-	//char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
-	fprintf(stderr, "SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file\n");
-	i = 0;
-	//int dimensione = ((fileHandle == NULL ) ? d->fdb->num_entries : d->fdb->num_entries-1);
-	fprintf(stderr, "SimpleFS_createFile() -> Numero nomi file: %d\n", dimensioneArray);
-	while ( i < dimensioneArray )
-	{
-		//fprintf(stderr, "SimpleFS_createFile() -> Dealloco posizione %d\n", i);
-		free(contenutoDirectory[i]);
-		//fprintf(stderr, "SimpleFS_createFile() -> Deallocato posizione %d\n", i);
-		i++;
-
 	}
 	free(contenutoDirectory);
 	fprintf(stderr, "SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file\n");	
