@@ -875,6 +875,7 @@ int SimpleFS_seek(FileHandle* f, int pos){
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
 // it does side effect on the provided handle
+
 int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 {
 	int ret = -1;
@@ -1077,7 +1078,29 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 	
 	return ret;
 }
-
+/*
+int SimpleFS_changeDir(DirectoryHandle* d, char* dirname) {
+	char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
+	i = 0;
+	while ( i < d->fdb->num_entries ) {
+		contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
+		i++;
+	}
+	SimpleFS_readDir(contenutoDirectory, d);
+	int presente=0;
+	i=0;
+	while (i < d->fdb->num_entries) {
+		if (contenutoDirectory[i]==dirname) {
+			presente++;
+			break;
+		}
+	}
+	if (presente==0) {
+		printf("la cartella selezionata non è presente");
+		return -1;
+	}
+}
+*/
 // creates a new directory in the current one (stored in fs->current_directory_block)
 // 0 on success
 // -1 on error
@@ -1126,12 +1149,14 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 
 			if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode)!= -1 ) {
 				if (DiskDriver_writeBlock(d->sfs->disk, (void*)firstDirectoryBlock, indexData) !=-1) {
-					if (SimpleFS_insertInodeInDirectory(d, indexInode) != -1 ){
-						d->fdb->num_entries = d->fdb->num_entries+1;
+					if (SimpleFS_insertInodeInDirectory(d,indexInode) != -1 ) {
+						d->fdb->num_entries= d->fdb->num_entries + 1;
 						return 0;
 					}
-
-
+					else  {
+						fprintf(stderr, "SimpleFS_mkDir impossibile inserire inode nella directory d \n");
+						return -1;
+					}
 				}
 
 			}
