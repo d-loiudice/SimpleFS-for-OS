@@ -9,19 +9,28 @@ int main(int na, char **va)
 	DiskDriver* disk = NULL;
 	SimpleFS* fileSystem = (SimpleFS*)malloc(sizeof(SimpleFS));
 	DirectoryHandle* directoryAttuale;
+	FileHandle* fileAperto = NULL;
 	int comando = 1;
 	char comandoStringa[200];
 	int numeroBlocchi = -1;
+	char** contenutoDirectory;
+	int i;
+	int dimensioneArray;
 	// Menu
 	// 99 per uscire dall'applicazione
 	while ( comando != 99 )
 	{
 		if ( disk == NULL) printf("1: Open or create disk with filesystem\n");
-		printf("2: Format the disk opened\n");
-		printf("3: Create a new file\n");
-		printf("4: Create a new directory\n");
-		printf("5: Change directory\n");
-		printf("6: \n");
+		if ( disk != NULL) printf("2: Format the disk opened\n");
+		if ( disk != NULL) printf("3: Create a new empty file\n");
+		if ( disk != NULL) printf("4: Create a new directory\n");
+		if ( disk != NULL) printf("5: Change directory\n");
+		if ( disk != NULL) printf("6: Show the files in the current directory\n");
+		if ( disk != NULL) printf("7: Open an existent file\n");
+		if ( fileAperto != NULL ) printf("8: Write something at the position \n");
+		if ( fileAperto != NULL ) printf("9: Read something at the position \n");
+		if ( fileAperto != NULL ) printf("10: Seek in file\n");
+		printf("99: Quit\n");
 		printf("\nEnter a value: ");
 		scanf("%d", &comando);
 		switch ( comando )
@@ -51,6 +60,7 @@ int main(int na, char **va)
 				fileSystem->disk = disk;
 				if ( numeroBlocchi != -1 )
 				{
+					printf("Formatto\n");
 					SimpleFS_format(fileSystem);
 				}
 				directoryAttuale = SimpleFS_init(fileSystem, disk);
@@ -68,25 +78,94 @@ int main(int na, char **va)
 				break;
 							
 			case 3:
+				if ( directoryAttuale != NULL )
+				{
+					do
+					{
+						printf("Select the name of the new file: ");
+						scanf("%180s", comandoStringa);
+						getchar();
+					} while ( strlen(comandoStringa) < 1 );
+					fileAperto = SimpleFS_createFile(directoryAttuale, comandoStringa);
+					if ( fileAperto == NULL )
+					{
+						printf("Can't create the new file\n");
+					}
+				}
+				else
+				{
+					printf("You aren't in any directory\n");
+				}
 				break;
 			
 			case 4:
+				if ( directoryAttuale != NULL )
+				{
+					do
+					{
+						printf("Select the name of the new directory: ");
+						scanf("%180s", comandoStringa);
+						getchar();
+					} while ( strlen(comandoStringa) < 1 );
+					if ( SimpleFS_mkDir(directoryAttuale, comandoStringa) != -1 )
+					{
+						// OK
+					}
+					else
+					{
+						printf("Can't create the new directory\n");
+					}
+					
+				}
+				else
+				{
+					printf("You aren't in any directory\n");
+				}
 				break;
 				
 			case 5:
 				break;
 			
 			case 6:
+				contenutoDirectory = (char**)malloc(directoryAttuale->fdb->num_entries*sizeof(char*)));
+				dimensioneArray = directoryAttuale->fdb->num_entries;
+				i = 0;
+				while ( i < dimensioneArray )
+				{
+					contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
+					i++;
+				}
+				printf("%d files in current directory: \n", dimensioneArray);
+				SimpleFS_readDir(contenutoDirectory, directoryAttuale);
+				// Stampa dei file contenuti nella directory
+				i = 0;
+
+				while ( i < dimensioneArray )
+				{
+					printf("%s\n", contenutoDirectory[i]);
+					i++;
+				}
+				// Libero la memoria
+				i = 0;
+				while ( i < dimensioneArray )
+				{
+					free(contenutoDirectory[i]);
+					i++;
+				}
+				free(contenutoDirectory);
 				break;
 				
 			case 99:
 				printf("Goodbye!\n");
+				// Rilascio le risorse
+				close(directoryAttuale->sfs->disk->fd);
 				break;
 				
 			default:
 				printf("Value not valid: %s\n", comandoStringa);
 				break;
 		}
+		printf("\n\n");
 		getchar();
 	}
 }

@@ -188,6 +188,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	
 	memcpy(dest, blockRead, BLOCK_SIZE);
 	//cannot free block read why?
+	DiskDriver_flush(disk);
 	return 0;
 }
 
@@ -237,6 +238,7 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	}
 	
 	free(bm);
+	DiskDriver_flush(disk);
 	return 0;
 }
 
@@ -280,7 +282,7 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num)
 		// Libero la struttura allocata dinamicamente usata
 		free(bitmap);
 	}
-	
+	DiskDriver_flush(disk);
 	return ret;
 }
 
@@ -309,6 +311,7 @@ int DiskDriver_getFreeBlock(DiskDriver* disk, int start)
 		free(bitmap);
 	}
 	
+	//DiskDriver_flush(disk);
 	return index;
 }
 
@@ -320,7 +323,11 @@ int DiskDriver_flush(DiskDriver* disk)
 	
 	if ( msync(disk->header, 3*BLOCK_SIZE, MS_SYNC) != -1 )
 	{
-		ret = 0;
+		if ( fsync(disk->fd) != -1 )
+		{
+			ret = 0;
+			fprintf(stderr, "Disco flushato\n");
+		}
 	}
 
 	return ret;
@@ -403,6 +410,7 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 			}
 		}
 	}
+	DiskDriver_flush(disk);
 	return ret;
 }
 
@@ -425,6 +433,7 @@ int DiskDriver_freeInode(DiskDriver* disk, int block_num)
 			ret = 0;
 		}
 	}
+	DiskDriver_flush(disk);
 	return ret;
 }
 

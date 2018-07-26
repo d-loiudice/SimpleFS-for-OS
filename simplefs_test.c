@@ -181,7 +181,7 @@ int main(int agc, char** argv) {
 	i=0;
 	//while ( i < 
 	
-	char** contenutoDirectory = (char**)malloc(sizeof(toplevel->fdb->num_entries*sizeof(char*)));
+	char** contenutoDirectory = (char**)malloc(toplevel->fdb->num_entries*sizeof(char*));
 	i = 0;
 	while ( i < toplevel->fdb->num_entries )
 	{
