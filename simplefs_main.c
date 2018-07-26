@@ -17,6 +17,7 @@ int main(int na, char **va)
 	int i;
 	int dimensioneArray;
 	int trovato;
+	int numeroBytes;
 	// Menu
 	// 99 per uscire dall'applicazione
 	while ( comando != 99 )
@@ -36,6 +37,7 @@ int main(int na, char **va)
 		scanf("%d", &comando);
 		switch ( comando )
 		{
+			// Apertura/creazione disco con filesystem
 			case 1:
 				printf("Selected option number 1\n");
 				printf("1: Insert file name: ");
@@ -66,7 +68,8 @@ int main(int na, char **va)
 				}
 				directoryAttuale = SimpleFS_init(fileSystem, disk);
 				break;
-									
+					
+			// Formattare un filesystem aperto
 			case 2:
 				if ( disk != NULL )
 				{
@@ -77,7 +80,8 @@ int main(int na, char **va)
 					printf("File not opened\n");
 				}
 				break;
-							
+					
+			// Creazione nuovo file
 			case 3:
 				if ( directoryAttuale != NULL )
 				{
@@ -87,8 +91,8 @@ int main(int na, char **va)
 						scanf("%180s", comandoStringa);
 						getchar();
 					} while ( strlen(comandoStringa) < 1 );
-					fileAperto = SimpleFS_createFile(directoryAttuale, comandoStringa);
-					if ( fileAperto == NULL )
+					
+					if ( SimpleFS_createFile(directoryAttuale, comandoStringa) == NULL )
 					{
 						printf("Can't create the new file\n");
 					}
@@ -99,6 +103,7 @@ int main(int na, char **va)
 				}
 				break;
 			
+			// Creazione nuova directory
 			case 4:
 				if ( directoryAttuale != NULL )
 				{
@@ -124,12 +129,13 @@ int main(int na, char **va)
 				}
 				break;
 				
+			// Cambia directory
 			case 5:
 				if ( directoryAttuale != NULL )
 				{
 					do
 					{
-						printf("Select the name of the new directory: ");
+						printf("Select the name of the next directory: ");
 						scanf("%180s", comandoStringa);
 						getchar();
 					} while ( strlen(comandoStringa) < 1 );
@@ -148,6 +154,7 @@ int main(int na, char **va)
 				}
 				break;
 			
+			// Stampa contenuto directory
 			case 6:
 				contenutoDirectory = (char**)malloc(directoryAttuale->fdb->num_entries*sizeof(char*));
 				dimensioneArray = directoryAttuale->fdb->num_entries;
@@ -177,6 +184,7 @@ int main(int na, char **va)
 				free(contenutoDirectory);
 				break;
 				
+			// Esci dall'applicazione
 			case 99:
 				printf("Goodbye!\n");
 				// Rilascio le risorse
@@ -186,6 +194,7 @@ int main(int na, char **va)
 				}
 				break;
 				
+			// Altri valori
 			default:
 				printf("Value not valid: %s\n", comandoStringa);
 				break;

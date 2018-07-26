@@ -178,7 +178,7 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	int exist = 0;
 	int dimensioneArray = d->fdb->num_entries;
 	// Inizializzaizone per registrare i nomi della directory
-	char** contenutoDirectory = (char**)malloc(sizeof(d->fdb->num_entries*sizeof(char*)));
+	char** contenutoDirectory = (char**)malloc(d->fdb->num_entries*sizeof(char*));
 	i = 0;
 	while ( i < dimensioneArray )
 	{
@@ -1147,88 +1147,117 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 	int indexInode;
 	int indexData;
 	int i;
+	int exist = 0;
+	int dimensioneArray;
 	FirstDirectoryBlock* firstDirectoryBlock;
-	if ( d->sfs->disk->header->inodeFree_blocks > 0 ) {
-		//indexInode=d->sfs->disk->header->inodeFirst_free_block;
-		indexInode = BitMap_get(bitmapInode, 0, 0);
-		if (d->sfs->disk->header->dataFree_blocks>0) {
-			//indexData= d->sfs->disk->header->dataFirst_free_block;
-			indexData = BitMap_get(bitmapData, 0, 0);
+	// Inizializzaizone per registrare i nomi della directory
+	char** contenutoDirectory = (char**)malloc(d->fdb->num_entries*sizeof(char*));
+	i = 0;
+	dimensioneArray = d->fdb->num_entries;
+	while ( i < dimensioneArray )
+	{
+		contenutoDirectory[i] = (char*)malloc(128*sizeof(char));
+		i++;
+	}
+	fprintf(stderr, "SimpleFS_createFile() -> allocato array con dimensione %d\n", dimensioneArray);
+	SimpleFS_readDir(contenutoDirectory, d);
+	i = 0;
+	while ( i < dimensioneArray )
+	{
+		if (strncmp(dirname, contenutoDirectory[i], 128) == 0 )
+		{
+			exist = 1;
+		}
+		i++;
+	}
+	if ( exist == 0 )
+	{
+		if ( d->sfs->disk->header->inodeFree_blocks > 0 ) {
+			//indexInode=d->sfs->disk->header->inodeFirst_free_block;
+			indexInode = BitMap_get(bitmapInode, 0, 0);
+			if (d->sfs->disk->header->dataFree_blocks>0) {
+				//indexData= d->sfs->disk->header->dataFirst_free_block;
+				indexData = BitMap_get(bitmapData, 0, 0);
 
-			inode = (Inode*)malloc(sizeof(Inode));
-			inode->permessiAltri = 7;
-			inode->permessiUtente = 7;
-			inode->permessiGruppo = 7;
-			inode->idUtente = 0;
-			inode->idGruppo = 0;
-			inode->dataCreazione = time(NULL);
-			inode->dataUltimoAccesso = inode->dataCreazione;
-			inode->dataUltimaModifica = inode->dataCreazione;
-			inode->dimensioneFile = 0;
-			inode->dimensioneInBlocchi = 1;
-			inode->tipoFile = 'd';
-			inode->primoBlocco = indexData;
+				inode = (Inode*)malloc(sizeof(Inode));
+				inode->permessiAltri = 7;
+				inode->permessiUtente = 7;
+				inode->permessiGruppo = 7;
+				inode->idUtente = 0;
+				inode->idGruppo = 0;
+				inode->dataCreazione = time(NULL);
+				inode->dataUltimoAccesso = inode->dataCreazione;
+				inode->dataUltimaModifica = inode->dataCreazione;
+				inode->dimensioneFile = 0;
+				inode->dimensioneInBlocchi = 1;
+				inode->tipoFile = 'd';
+				inode->primoBlocco = indexData;
 
-			firstDirectoryBlock=malloc(sizeof(FirstDirectoryBlock));
+				firstDirectoryBlock=malloc(sizeof(FirstDirectoryBlock));
 
-			firstDirectoryBlock->header.block_in_file=0;
-			firstDirectoryBlock->header.next_block=-1;
-			firstDirectoryBlock->header.previous_block=-1;
-			
-			firstDirectoryBlock->num_entries=0;
+				firstDirectoryBlock->header.block_in_file=0;
+				firstDirectoryBlock->header.next_block=-1;
+				firstDirectoryBlock->header.previous_block=-1;
+				
+				firstDirectoryBlock->num_entries=0;
 
-			firstDirectoryBlock->fcb.parent_inode=d->inode;
-			firstDirectoryBlock->fcb.block_in_disk=indexData;
-			strncpy(firstDirectoryBlock->fcb.name, dirname, 128);
-			//memset(firstDirectoryBlock->file_inodes, -1, (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) );
-			i = 0;
-			while ( i < (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) )
-			{
-				firstDirectoryBlock->file_inodes[i] = -1;
-				i++;
-			}
-
-			if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode)!= -1 ) {
-				fprintf(stderr, "SimpleFS_mkdir() -> scritto su inode: %d\n", indexInode); 
-				if (DiskDriver_writeBlock(d->sfs->disk, (void*)firstDirectoryBlock, indexData) !=-1) {
-					fprintf(stderr, "SimpleFS_mkdir() -> scritto su blocco: %d\n", indexData); 
-					if (SimpleFS_insertInodeInDirectory(d,indexInode) != -1 ) {
-						d->fdb->num_entries= d->fdb->num_entries + 1;
-						// E la riscrivo su file
-						if ( DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk) != - 1)
-						{
-							// OK
-							fprintf(stderr, "SimpleFS_mkDir() -> Ora ci sono %d files\n", d->fdb->num_entries);
-							//DiskDriver_flush(d->sfs->disk);
-							return 0;
-						}
-						else
-						{
-							fprintf(stderr, "SimpleFS_mkDir() -> Errore durante la sovrascrittura del FirstDirectoryBlock della cartella padre\n");
-						}
-
-					}
-					else  {
-						fprintf(stderr, "SimpleFS_mkDir impossibile inserire inode nella directory d \n");
-						return -1;
-					}
-				}
-				else
+				firstDirectoryBlock->fcb.parent_inode=d->inode;
+				firstDirectoryBlock->fcb.block_in_disk=indexData;
+				strncpy(firstDirectoryBlock->fcb.name, dirname, 128);
+				//memset(firstDirectoryBlock->file_inodes, -1, (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) );
+				i = 0;
+				while ( i < (BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock)-sizeof(int))/sizeof(int) )
 				{
-					fprintf(stderr, "SimpleFS_mkDir() -> Errore durante la scruttura del nuovo blocco FirstDirectoryBlock\n");
+					firstDirectoryBlock->file_inodes[i] = -1;
+					i++;
 				}
 
-			}
-			else {
-				fprintf(stderr, "Errore durante la scrittura dell'inode\n");
-				return -1;
-			}
-			
+				if ( DiskDriver_writeInode(d->sfs->disk, inode, indexInode)!= -1 ) {
+					fprintf(stderr, "SimpleFS_mkdir() -> scritto su inode: %d\n", indexInode); 
+					if (DiskDriver_writeBlock(d->sfs->disk, (void*)firstDirectoryBlock, indexData) !=-1) {
+						fprintf(stderr, "SimpleFS_mkdir() -> scritto su blocco: %d\n", indexData); 
+						if (SimpleFS_insertInodeInDirectory(d,indexInode) != -1 ) {
+							d->fdb->num_entries= d->fdb->num_entries + 1;
+							// E la riscrivo su file
+							if ( DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk) != - 1)
+							{
+								// OK
+								fprintf(stderr, "SimpleFS_mkDir() -> Ora ci sono %d files\n", d->fdb->num_entries);
+								//DiskDriver_flush(d->sfs->disk);
+								return 0;
+							}
+							else
+							{
+								fprintf(stderr, "SimpleFS_mkDir() -> Errore durante la sovrascrittura del FirstDirectoryBlock della cartella padre\n");
+							}
+
+						}
+						else  {
+							fprintf(stderr, "SimpleFS_mkDir impossibile inserire inode nella directory d \n");
+							return -1;
+						}
+					}
+					else
+					{
+						fprintf(stderr, "SimpleFS_mkDir() -> Errore durante la scruttura del nuovo blocco FirstDirectoryBlock\n");
+					}
+
+				}
+				else {
+					fprintf(stderr, "Errore durante la scrittura dell'inode\n");
+					return -1;
+				}
+				
 
 
+
+			}
 
 		}
-
+	}
+	else
+	{
+		fprintf(stderr, "SimpleFS_mkDir() -> La directory già esiste\n");
 	}
 	return -1; 
 
