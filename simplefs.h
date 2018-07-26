@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
   BlockHeader header;
   FileControlBlock fcb;
-  int num_entries;
+  int num_entries;		//total number of file inodes in fdb and eventual next db 
   int file_inodes[ (BLOCK_SIZE
 		   -sizeof(BlockHeader)
 		   -sizeof(FileControlBlock)
@@ -151,6 +151,7 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname);
 // if a directory, it removes recursively all contained files
 int SimpleFS_remove(SimpleFS* fs, char* filename);
 
+int SimpleFS_listFiles(SimpleFS* fs);
 
 int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode);
 
