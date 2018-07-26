@@ -388,12 +388,14 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 {
 	int ret = -1;
 	BitMap* bitmapInode;
+	int vecchioValore;
 	// Verifica che l'indice dell'inode esista
 	if ( block_num >= 0 && block_num < disk->header->inodemap_blocks ) 
 	{
 		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
 		bitmapInode->num_bits = disk->header->inodemap_blocks;
 		bitmapInode->entries = disk->bitmap_inode_values;
+		vecchioValore = BitMap_get(bitmapInode, block_num, 0);
 		// Setto che nell'indice indicato l'inode è occupato
 		if ( BitMap_set(bitmapInode, block_num, 1) == 1 )
 		{
@@ -405,6 +407,11 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 				if ( write(disk->fd, src, sizeof(Inode)) > 0 )
 				{
 					// OK
+					// Aggiorno il dato degli inode liberi del primo inode libero nel caso fosse precedentemente libero
+					if ( vecchioValore == 0 )
+					{
+						//
+					}
 					ret = 0;
 				}
 			}

@@ -16,6 +16,7 @@ int main(int na, char **va)
 	char** contenutoDirectory;
 	int i;
 	int dimensioneArray;
+	int trovato;
 	// Menu
 	// 99 per uscire dall'applicazione
 	while ( comando != 99 )
@@ -124,10 +125,31 @@ int main(int na, char **va)
 				break;
 				
 			case 5:
+				if ( directoryAttuale != NULL )
+				{
+					do
+					{
+						printf("Select the name of the new directory: ");
+						scanf("%180s", comandoStringa);
+						getchar();
+					} while ( strlen(comandoStringa) < 1 );
+					if ( SimpleFS_changeDir(directoryAttuale, comandoStringa) != -1 )
+					{
+						// OK
+					}
+					else
+					{
+						printf("The selected directory doesn't exist\n");
+					}
+				}
+				else
+				{
+					printf("You aren't in any directory\n");
+				}
 				break;
 			
 			case 6:
-				contenutoDirectory = (char**)malloc(directoryAttuale->fdb->num_entries*sizeof(char*)));
+				contenutoDirectory = (char**)malloc(directoryAttuale->fdb->num_entries*sizeof(char*));
 				dimensioneArray = directoryAttuale->fdb->num_entries;
 				i = 0;
 				while ( i < dimensioneArray )
@@ -158,7 +180,10 @@ int main(int na, char **va)
 			case 99:
 				printf("Goodbye!\n");
 				// Rilascio le risorse
-				close(directoryAttuale->sfs->disk->fd);
+				if ( directoryAttuale != NULL )
+				{
+					close(directoryAttuale->sfs->disk->fd);
+				}
 				break;
 				
 			default:
