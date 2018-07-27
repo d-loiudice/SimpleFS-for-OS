@@ -207,9 +207,15 @@ int main(int agc, char** argv) {
 	ret=SimpleFS_listFiles(fileSystem);
 	if(ret<0) perror("err ret of list files");
 	
-	//ret=SimpleFS_remove(fileSystem, "wow.txt");
-	//if(ret<0) perror("err ret of remove \n");
-
+	ret=SimpleFS_remove(fileSystem, "wow.txt");
+	if(ret<0) perror("err ret of remove \n");
+	
+	ret=SimpleFS_remove(fileSystem, "paolino");
+	if(ret<0) perror("2: err ret of remove \n");
+	
+	ret=SimpleFS_listFiles(fileSystem);
+	if(ret<0) perror("2: err ret of list files");
+	
 /*
 	ret=SimpleFS_close(hf);
 	if(ret<0) perror("err ret of close \n");

@@ -4,6 +4,10 @@
 #include "disk_driver.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 /*these are structures stored on disk*/
 
 // header, occupies the first portion of each block in the disk

@@ -326,7 +326,7 @@ int DiskDriver_flush(DiskDriver* disk)
 		if ( fsync(disk->fd) != -1 )
 		{
 			ret = 0;
-			fprintf(stderr, "Disco flushato\n");
+		//	fprintf(stderr, "Disco flushato\n");
 		}
 	}
 
