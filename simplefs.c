@@ -11,7 +11,7 @@
 #define TRUE 1
 #define FALSE 0
 #define FILE_DIM 2048 //sono 2048 * 512 B = 1024 KB = 1 MB   
-
+#define E "errore generico\n"
 // initializes a file system on an already made disk
 // returns a handle to the top level directory stored in the first block
 DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
@@ -1428,6 +1428,28 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 }
 
 
+
+void static printPermessi(unsigned char u,unsigned char g,unsigned char o){
+	(bit_is_one(u,5))?fprintf(stderr,"r"):fprintf(stderr,"-");
+	(bit_is_one(u,6))?fprintf(stderr,"w"):fprintf(stderr,"-");
+	(bit_is_one(u,7))?fprintf(stderr,"x"):fprintf(stderr,"-");
+	
+	(bit_is_one(g,5))?fprintf(stderr,"r"):fprintf(stderr,"-");
+	(bit_is_one(g,6))?fprintf(stderr,"w"):fprintf(stderr,"-");
+	(bit_is_one(g,7))?fprintf(stderr,"x"):fprintf(stderr,"-");
+	
+	(bit_is_one(o,5))?fprintf(stderr,"r"):fprintf(stderr,"-");
+	(bit_is_one(o,6))?fprintf(stderr,"w"):fprintf(stderr,"-");
+	(bit_is_one(o,7))?fprintf(stderr,"x"):fprintf(stderr,"-");
+	/*
+	printf("%d%d%d",u,g,o);
+	printf("\n");
+	bits_print(&u,1);
+	bits_print(&g,1);
+	bits_print(&o,1);
+	*/
+	}
+
 //list (print names of) all files (both r and d types) in current directory 
 //return 0 on success else -1
 int SimpleFS_listFiles(SimpleFS* fs){
@@ -1448,9 +1470,57 @@ int SimpleFS_listFiles(SimpleFS* fs){
 	if(ret<0) return -1;
 	//fdb caricato
 	
+	fprintf(stderr,"SimpleFS_listFiles -> %s ",fdb->fcb.name);
+	int i;
+	DirectoryBlock* db= malloc(sizeof(DirectoryBlock));
+	FirstFileBlock* ffb= malloc(sizeof(FirstFileBlock));
+	int first_block_flag=TRUE;
+	int n_block=-1;
+	for(i=0; i < fdb->num_entries; i++){
+		
+		if(first_block_flag){
+			ret=DiskDriver_readInode(fs->disk,inode,fdb->file_inodes[i] );
+			if(ret<0) return -1;
+			ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
+			if(ret<0) return -1;
+			fprintf(stderr,"%s -> ",__func__);
+			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
+			fprintf(stderr," %c %ld %s \n",inode->tipoFile,inode->dimensioneFile,ffb->fcb.name);
+			
+		}
+		if(i>=limit && first_block_flag){	//c è bisogno di altri  blocchi (db) e venivamo da fdb
+			n_block=fdb->header.next_block;
+			if(n_block==-1) break;
+			ret=DiskDriver_readBlock(fs->disk,db,n_block);	//caricato il db
+			first_block_flag=FALSE;
+			ret=DiskDriver_readInode(fs->disk,ffb,db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] );
+			if(ret<0) return -1;
+			fprintf(stderr,"%s -> ",__func__);
+			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
+			fprintf(stderr," %c %ld %s \n",inode->tipoFile,inode->dimensioneFile,ffb->fcb.name);
+
+		}
+		else if(i>=limit){
+			n_block=db->header.next_block;
+			if(n_block==-1) break;
+			ret=DiskDriver_readBlock(fs->disk,db,n_block);
+			if(ret<0) return -1;
+			ret=DiskDriver_readInode(fs->disk,ffb,db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] );
+			if(ret<0) return -1;
+			fprintf(stderr,"%s -> ",__func__);
+			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
+			fprintf(stderr," %c %ld %s \n",inode->tipoFile,inode->dimensioneFile,ffb->fcb.name);
+			}
+		if(ret<0) return -1;
+		fprintf(stderr,"SimpleFS_listFiles -> %s \n",fdb->fcb.name);
+	}
+		
+	
+	/*
 	FirstFileBlock* ffb=malloc(sizeof(FirstFileBlock));
 	DirectoryBlock* db=malloc(sizeof(DirectoryBlock));;
 	int i,j,num_db,no_db=FALSE,n_block=0;
+	fprintf(stderr,"SimpleFS_listFiles() -> num_entries di %s: %d \n",fdb->fcb.name,fdb->num_entries);
 	if(fdb->num_entries <= limit){	//basta il fdb
 		no_db=TRUE;
 	}
@@ -1462,7 +1532,7 @@ int SimpleFS_listFiles(SimpleFS* fs){
 
 	if(no_db==TRUE){	//mi basta scorrere tutti i num_entries file_inodes[] di  fdb
 		for(i=0;i< fdb->num_entries; i++){
-			fprintf(stderr,"printo i file di fdb \n |nomefile|\t|tipoFile|\n\n");
+			fprintf(stderr,"SimpleFS_listFiles() -> printo i file di fdb \n |nomefile|\t|tipoFile|\n\n");
 			ret=DiskDriver_readInode(fs->disk,inode,fdb->file_inodes[i]);
 			if(fdb->file_inodes[i] < 0) continue;
 			ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
@@ -1473,7 +1543,7 @@ int SimpleFS_listFiles(SimpleFS* fs){
 		}
 	else{
 		for(i=0;i< limit; i++){	//comunque leggo tutti i file_inodes[] del primo blocco
-			fprintf(stderr,"printo i file di fdb \n |nomefile|\t|tipoFile|\n");
+			fprintf(stderr,"SimpleFS_listFiles() -> printo i file di fdb \n |nomefile|\t|tipoFile|\n");
 			ret=DiskDriver_readInode(fs->disk,inode,fdb->file_inodes[i]);
 			if(fdb->file_inodes[i] < 0) continue;
 			ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
@@ -1484,7 +1554,7 @@ int SimpleFS_listFiles(SimpleFS* fs){
 		n_block=fdb->header.next_block;
 		assert(n_block>=0);	// ce ne deve essere uno (vedi cond. con ceil)
 		for(i=0;i < num_db;i++){
-			fprintf(stderr,"printo i file di db,index: %d\n",i);
+			fprintf(stderr,"SimpleFS_listFiles() -> printo i file di db,index: %d\n",i);
 			ret=DiskDriver_readBlock(fs->disk,db,n_block);
 			if(ret<0) return -1;
 			
@@ -1505,7 +1575,7 @@ int SimpleFS_listFiles(SimpleFS* fs){
 	free(ffb);
 	free(fdb);
 	free(inode);
-	
+	*/
 	return 0;
 	
 	}

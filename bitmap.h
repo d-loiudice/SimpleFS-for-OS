@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-/*	BIT MATH OPERATIONS MACRO */
-//get the bit in i position of c
+/*	BIT MATH OPERATIONS MACRO REVERSED */
+//All operations are reversed
+//get the bit in i position of c 
 #define bit_get(c,i) ((c) & (1<<(7-i) ))	
 //set the bit in i position of clear  
 #define bit_set(c,i) ((c) |= (1<<(7-i) ))	
@@ -40,6 +41,8 @@ int BitMap_get(BitMap* bmap, int start, int status);
 // sets the bit at index pos in bmap to status
 int BitMap_set(BitMap* bmap, int pos, int status);
 
+//prints all bits of a char array, with size=dim
+void bits_print(char* arr,int dim);
 /*
 // INODES
 
