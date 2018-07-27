@@ -30,17 +30,44 @@ TODO
      and if they are directory themselves
      
      
-     
-     
+Our project is based on a simple File System implementation, 
+which is a simplified version of a commercial File System  in use today and 
+this means that it is possible to creare Directory and File and access them 
+(list,read,write,delete). To do that we divided disk space in fixed size 
+(512 B) blocks:
 
-[||||]
-
-Ad esempio 30 blocchi totali allocabili (grandezza della partizione)
+[S|B|B|I|I|I|I|I|D|D|D|D|D|D...]
 
 
-Abbiamo:
-1 blocco superblocco
-1 blocco bitmap
-1 blocco inodemap
-4 blocchi di inode (quindi 16 * 4 file/directory associate)
-23 data block  [bitmap_blocks]
+- First block (S) is used to store DiskHeader structure which contains
+general info on File System
+- Second one (B) is used to store the Data Bitmap (see below)
+- Third one (B) is used to store the Inode Bitmap 
+- Next five blocks (I) are used to store inodes, wich contains metadata upon 
+file and directories stored in D
+- Last blocks (D) are used to  store file and directories
+ 
+ 
+# About BitMap
+Bitmap are data structures implemented with arrays of char in wich each bit
+of a char entry, show if the block in disk with the index of 
+the block + the microindex of the bit is free (0 value) or allocated (1 value).
+We use two instances of them one for data blocks (Data Bitmap) and one for 
+Inode blocks (Inode Bitmap).
+ 
+# About file sources
+- bitmap.h -> all the functions about the two bitmaps
+- disk_driver.h -> functions about block memory of our File System 
+- simplefs.h -> functions and data to manage directory and files at high level:
+	create,read,list,remove them
+- inode.h in ->  data structure for the inode metadata
+
+To compile:
+$ make simple_fs 
+to run the control interface (inside bash, no gui provided):
+$ ./simple_fs
+
+Project made by three cs students :
+ Tiziano Bari -> https://github.com/RareAverage301
+ Giuseppe Capaldi -> https://github.com/N0t-A-G3n1us
+ Davide Lo Iudice -> https://github.com/LinguaggioScalabile

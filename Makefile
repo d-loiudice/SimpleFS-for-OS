@@ -21,5 +21,7 @@ all:	$(BINS)
 so_game: simplefs_test.c $(OBJS) 
 	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
 
+simple_fs: simplefs_main.c $(OBJS)
+	$(CC) $(CCOPTS)  -o $@ $^ $(LIBS)
 clean:
 	rm -rf *.o *~  $(BINS)
