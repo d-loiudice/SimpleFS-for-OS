@@ -1,0 +1,49 @@
+Ho letto il primo inode
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file1 in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dir1 in posizione 1
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file1 in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dir1 in posizione 1
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file1 in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dir1 in posizione 1
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file1 in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x559b77f54af0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dir1 in posizione 1
