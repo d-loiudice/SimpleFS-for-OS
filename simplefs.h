@@ -158,4 +158,3 @@ int SimpleFS_remove(DirectoryHandle* d, char* filename);
 int SimpleFS_listFiles(SimpleFS* fs);
 
 int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode);
-

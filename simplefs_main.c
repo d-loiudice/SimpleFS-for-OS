@@ -195,7 +195,9 @@ int main(int na, char **va)
 						scanf("%180s", comandoStringa);
 						getchar();
 					} while ( strlen(comandoStringa) < 1 );
-					if ( SimpleFS_remove(directoryAttuale, comandoStringa) != -1 )
+					//if ( SimpleFS_remove(directoryAttuale, comandoStringa) != -1 )
+					if ( SimpleFS_rm(directoryAttuale, comandoStringa) != -1 )
+					
 					{
 						printf("%s removed successfully\n", comandoStringa);
 					}
@@ -212,23 +214,59 @@ int main(int na, char **va)
 			
 			// Apri file
 			case 8:
-				
+				if ( fileAperto == NULL )
+				{
+					
+				}
+				else
+				{
+					printf("Close the already opened file before to open a new one\n");
+				}
 				break;
 			
 			// Scrivi su file le cose lette da standard input
 			case 9:
+				if ( fileAperto != NULL )
+				{
+				}
+				else
+				{
+					printf("File not opened\n");
+				}
 				break;
 				
 			// Stampa su schermo le cose lette dal file (numero byte indicato dallo standard input)
 			case 10:
+				if ( fileAperto != NULL )
+				{
+				}
+				else
+				{
+					printf("File not opened\n");
+				}
 				break;
 				
 			// Spostati alla posizione indicata nello standard input nel file
 			case 11:
+				if ( fileAperto != NULL )
+				{
+				}
+				else
+				{
+					printf("File not opened\n");
+				}
 				break;
 			
 			// Chiudi file aperto
 			case 12:
+				if ( fileAperto != NULL )
+				{
+					fileAperto = NULL;
+				}
+				else
+				{
+					printf("File not opened\n");
+				}
 				break;
 			
 			// Dati disco

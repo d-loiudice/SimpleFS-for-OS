@@ -355,7 +355,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 			// Ho già il FirstDirectoryBlock allocato
 			while ( indexFiles < dimension )
 			{
-				fprintf(stderr, "SimpleFS_readDir() -> Inode letto a posizione %d: %d\n",indexFiles, d->fdb->file_inodes[indexFiles]);
+				//fprintf(stderr, "SimpleFS_readDir() -> Inode letto a posizione %d: %d\n",indexFiles, d->fdb->file_inodes[indexFiles]);
 				// Se effettivamente è presente un indice inode valido relativo al file...
 				if ( d->fdb->file_inodes[indexFiles] != -1 )
 				{
@@ -1991,7 +1991,3 @@ int SimpleFS_remove(DirectoryHandle* d, char* filename){
 	
 	*/
 	}
-
-
-  
-

@@ -231,8 +231,9 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	disk->header->dataFirst_free_block=BitMap_get(bm,0,0);
 	//fprintf(stderr, "DiskDriver_writeBlock() -> Data free blocks = %d\n", disk->header->dataFree_blocks);
 	
-	if ( vecchioValore == 0 ){
+	if ( vecchioValore == block_num ){
 		// Se era un blocco libero decremento il numero di blocchi data liberi
+		fprintf(stderr, "DiskDriver_writeBlock() -> occupato un blocco data\n");
 		disk->header->dataFree_blocks--;
 	}
 	
@@ -269,6 +270,7 @@ int DiskDriver_freeBlock(DiskDriver* disk, int block_num)
 			{
 				// Modifico le informazioni relative ai blocchi data liberi 
 				// memorizzati nel DiskHeader 
+				fprintf(stderr, "DiskDriver_freeBlock() -> liberato un blocco data\n");
 				disk->header->dataFree_blocks = disk->header->dataFree_blocks + 1;
 				if ( block_num < disk->header->dataFirst_free_block ) 
 				{
@@ -412,8 +414,9 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 				{
 					// OK
 					// Aggiorno il dato degli inode liberi del primo inode libero nel caso fosse precedentemente libero
-					if ( vecchioValore == 0 )
+					if ( vecchioValore == block_num )
 					{
+						fprintf(stderr, "DiskDriver_writeInode() -> occupato un inode\n");
 						disk->header->inodeFree_blocks--;
 					}
 					ret = 0;
@@ -438,8 +441,8 @@ int DiskDriver_freeInode(DiskDriver* disk, int block_num)
 		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
 		bitmapInode->num_bits = disk->header->inodemap_blocks;
 		bitmapInode->entries = disk->bitmap_inode_values;
-		vecchioValore = BitMap_get(bitmapInode, block_num, 0);
-		printf("DiskDriver_freeInode() -> vecchioValore = %d blocco cercato = %d\n", vecchioValore, block_num);
+		vecchioValore = BitMap_get(bitmapInode, block_num, 1);
+		fprintf(stderr, "DiskDriver_freeInode() -> vecchioValore = %d blocco cercato = %d\n", vecchioValore, block_num);
 		// Setto che nell'indice indicato l'inode è libero
 		if ( BitMap_set(bitmapInode, block_num, 0) == 0 )
 		{
@@ -448,6 +451,7 @@ int DiskDriver_freeInode(DiskDriver* disk, int block_num)
 			// e incremento il valore nell'header
 			if ( vecchioValore == block_num )
 			{
+				fprintf(stderr, "DiskDriver_freeInode() -> liberato un inode\n");
 				disk->header->inodeFree_blocks++;
 			}
 			ret = 0;
