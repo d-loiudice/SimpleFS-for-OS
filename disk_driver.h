@@ -2,6 +2,12 @@
 #include "bitmap.h"
 
 #define BLOCK_SIZE 512
+
+#define ERROR -1
+#define NUM_SUPER 1		//num block (just one) for super block
+#define NUM_BITMAPS 2	//fixed total num of blocks for bitmap structures
+#define NUM_INODES 5	//fixed total num of inodes
+#define INODES_PER_BLOCK 8	//how much inodes are in a block
 // this is stored in the 1st block of the disk
 typedef struct {
   // Numero totali di blocchi nel disco

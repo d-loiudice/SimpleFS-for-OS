@@ -48,7 +48,7 @@ BitMapEntryKey BitMap_blockToIndex(int num){
 
 // converts a bit to a linear index
 int BitMap_indexToBlock(int entry, uint8_t bit_num){ 
-	if(bit_num<0 || bit_num >7 || entry < 0 ){
+	if(bit_num < 0 || bit_num > 7 || entry < 0 ){
 		perror("invalid values");
 		return -1;
 	}
@@ -65,11 +65,12 @@ int BitMap_get(BitMap* bmap, int start, int status){
 	int j;
 
 	BitMapEntryKey k=BitMap_blockToIndex(start);
-	if(start<0 || start >= ENTRIES_DEFAULT_NUM){
+	if(start < 0 || start >= ENTRIES_DEFAULT_NUM){
 		perror("invalid start in bitmap");
 		return -1;
 	}
-	for(i=k.entry_num; i < bmap->num_bits/8;i++){	//start from start block
+	int num_arr_entries=bmap->num_bits/8;
+	for(i=k.entry_num; i < num_arr_entries;i++){	//start from start block
 		for (j=k.bit_num ;j<8;j++){
 			//printf("%d ",bit_get(bmap->entries[i],j));
 			char r=bit_get(bmap->entries[i],j) !=0 ? 1 : 0;
@@ -107,7 +108,7 @@ BitMap BitMap_init(void){
 
 	BitMap bmap;
 	bmap.num_bits=ENTRIES_DEFAULT_NUM * 8;
-	char* arr= (char*)malloc(sizeof(char)*ENTRIES_DEFAULT_NUM);		//<- memory leakage
+	char* arr= (char*)malloc(sizeof(char)*ENTRIES_DEFAULT_NUM);		//TODEL <- memory leakage
 	strncpy(arr,"",ENTRIES_DEFAULT_NUM);
 	bmap.entries=arr;
 	return bmap;

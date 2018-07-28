@@ -11,7 +11,7 @@
 #define TRUE 1
 #define FALSE 0
 #define FILE_DIM 2048 //sono 2048 * 512 B = 1024 KB = 1 MB   
-#define E "errore generico\n"
+
 // initializes a file system on an already made disk
 // returns a handle to the top level directory stored in the first block
 DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
@@ -45,10 +45,10 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 			//directoryHandle->parent_inode = -1;
 			directoryHandle->inode = 0;
 			//directoryHandle->dcb = (FirstDirectoryBlock*) malloc(sizeof(DirectoryHandle));
+			
 			// La top level directory è registrata nel primo inode
 			// Ottengo il primo inode e da lì ottengo l'indice del blocco che contiene
 			// il FirstDirectoryBlock
-			// Dall'inode ottengo l'indice del blocco contenente il FirstDirectoryBlock
 			directoryHandle->fdb = (FirstDirectoryBlock*) malloc(sizeof(FirstDirectoryBlock));
 			// L'indice del blocco data contenente i dati è nell'inode
 			if ( DiskDriver_readBlock(disk, (void*)directoryHandle->fdb, inode->primoBlocco) != -1 )
@@ -325,6 +325,8 @@ FileHandle* SimpleFS_createFile(DirectoryHandle* d, const char* filename)
 	DiskDriver_flush(d->sfs->disk);
 	return fileHandle;
 }
+//TODEL bitmaps
+
 // reads in the (preallocated) blocks array, the name of all files in a directory 
 int SimpleFS_readDir(char** names, DirectoryHandle* d)
 {
@@ -362,7 +364,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 					// ... Ottengo l'inode e successivamente il FirstFileBlock/FirstDirectoryBlock indicato dall'inode acquisito
 					// e da esso leggo il nome del file contenuto nel FileControlBlock
 					inodeRead = (Inode*)malloc(sizeof(Inode));
-					fprintf(stderr, "SimpleFS_readDir() -> inodeRead allocato a indirizzo %d\n", inodeRead);
+					fprintf(stderr, "SimpleFS_readDir() -> inodeRead allocato a indirizzo %p\n", inodeRead);
 					if ( DiskDriver_readInode(d->sfs->disk, inodeRead ,d->fdb->file_inodes[indexFiles]) != -1 )
 					{
 						//fprintf(stderr, "Dimensione inode: %d", sizeof(Inode));
@@ -507,6 +509,7 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 	FileHandle* f=NULL;
 	Inode* inode;
 	FirstFileBlock* ffb;
+	DirectoryBlock* db;
 	if(d==NULL || d->fdb==NULL)
 		return NULL;
 	
@@ -515,17 +518,62 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 		   -sizeof(BlockHeader)
 		   -sizeof(FileControlBlock)
 		    -sizeof(int))/sizeof(int);
-	unsigned char found=FALSE; 
-	for(i=0;i<bound;i++){
-		in_index=d->fdb->file_inodes[i];
-		inode=malloc(sizeof(Inode));
-		ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
-		if(ret<0) return NULL;
-		ffb=malloc(sizeof(FirstFileBlock));
-		ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
-		if(ret<0) return NULL;
-		if( strcmp(ffb->fcb.name,filename)==0) found=TRUE;	//confronto i nomi
+	unsigned char found=FALSE,no_db=FALSE; 
+	if(d->fdb->num_entries <= bound)
+		no_db=TRUE;
+	
+	if(no_db==TRUE){
+		for(i=0;i < d->fdb->num_entries;i++){
+			in_index=d->fdb->file_inodes[i];
+			if(in_index < 0) continue;
+			inode=malloc(sizeof(Inode));
+			ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
+			if(ret<0) return NULL;
+			ffb=malloc(sizeof(FirstFileBlock));
+			ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
+			if(ret<0) return NULL;
+			if( strcmp(ffb->fcb.name,filename)==0) found=TRUE;	//confronto i nomi
+			}
+	}
+	else{
+		db=malloc(sizeof(DirectoryBlock));
+		int index_block=0;
+		int num_db=	ceil( (double)(d->fdb->num_entries-bound) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
+		int next=-1;
+		while( index_block < num_db + 1){
+			
+			if(next > 0){	//inizialmente no
+				ret=DiskDriver_readBlock(d->sfs->disk,db,next);	//lettura eventuale db successivo
+				if(ret<0) return NULL;
+			}
+			else
+				break;
+			for(i=0;i < bound; i++){
+				if(index_block==0)
+					in_index=d->fdb->file_inodes[i];
+				else
+					in_index=db->file_inodes[i];
+				if(in_index < 0) continue; 
+				inode=malloc(sizeof(Inode));
+				ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
+				if(ret<0) return NULL;
+				ffb=malloc(sizeof(FirstFileBlock));
+				ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
+				if(ret<0) return NULL;
+				if( strcmp(ffb->fcb.name,filename)==0) found=TRUE;	//confronto i nomi
+				}
+			if(index_block==0)
+				next=d->fdb->header.next_block;
+			else{
+				next=db->header.next_block;
+				}
+			
+		
+			index_block++;
+		
 		}
+		free(db);
+	}
 	if(!found) return NULL;
 	
 	DiskDriver_init(f->sfs->disk,filename,inode->dimensioneInBlocchi);
@@ -561,18 +609,13 @@ int SimpleFS_close(FileHandle* f){
 // returns the number of bytes written
 int SimpleFS_write(FileHandle* f, void* data, int size){
 	
-	if(f==NULL || f->ffb ==NULL){
-		perror("not valid file");
+	if(f==NULL || f->ffb ==NULL || size <0 || data==NULL){
+		perror("not valid parameter(s)");
 		return -1;
 		}
 	
 	int ret;
-	if(f->ffb==NULL){	//un po come se il file fosse vuoto 
-		perror("cannot find first file block");
-		return -1;
-	}
-	
-	
+		
 	//lettura inode
 	Inode* in_read=malloc(sizeof(Inode));
 	int in_block_num=f->inode ; //index to access the inode of the file 
@@ -601,7 +644,7 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 	}
 	
 	FileBlock* fbw= malloc(sizeof(FileBlock)); 	//alloco blocco che scriverò
-	FirstFileBlock* ffbw= malloc(sizeof(FirstFileBlock));;
+	FirstFileBlock* ffbw= malloc(sizeof(FirstFileBlock));
 	void* dest; 
 	char* d_data;
 	if(is_ffb){	//parto dal primo blocco
@@ -660,8 +703,7 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 			
 			//preparo il blockHeader per il prossimo blocco
 			FileBlock* fbr=malloc(sizeof(FileBlock));
-			ret= DiskDriver_readBlock(f->sfs->disk,fbr,
-						f->current_block->next_block);	//file block letto
+			ret= DiskDriver_readBlock(f->sfs->disk,fbr,f->current_block->next_block);	//file block letto
 			if(ret< 0){
 				perror("errore in readblock di write simple fs");
 				return -1;
@@ -863,7 +905,7 @@ int SimpleFS_seek(FileHandle* f, int pos){
 		num_block=2;	//è nel secondo blocco
 	}
 	else{
-		num_block= ceil( (pos - payload1_bytes)/payload2_bytes );	//è in uno dei successivi blocchi
+		num_block= ceil( (double)(pos - payload1_bytes)/payload2_bytes );	//è in uno dei successivi blocchi
 	}
 	
 	if(num_block==1){
@@ -900,7 +942,6 @@ int SimpleFS_seek(FileHandle* f, int pos){
 int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 {
 	int ret = -1;
-	char** contenutoDirectory;
 	int i;
 	//int trovato = -1;
 	BlockHeader* blockHeader = NULL;
@@ -1433,7 +1474,7 @@ int SimpleFS_insertInodeInDirectory(DirectoryHandle* d, int inode)
 
 
 void static printPermessi(unsigned char u,unsigned char g,unsigned char o){
-	(bit_is_one(u,5))?fprintf(stderr," r"):fprintf(stderr,"-");
+	(bit_is_one(u,5))?fprintf(stderr," r"):fprintf(stderr," -");
 	(bit_is_one(u,6))?fprintf(stderr,"w"):fprintf(stderr,"-");
 	(bit_is_one(u,7))?fprintf(stderr,"x"):fprintf(stderr,"-");
 	
@@ -1712,7 +1753,7 @@ int SimpleFS_remove(DirectoryHandle* d, char* filename){
 		no_db=FALSE;
 		//calcolo il numero di db che devo scorrere
 		//num_db= ceil( (fdbr->num_entries-limit) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
-		num_db= ceil( (d->fdb->num_entries-limit) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
+		num_db= ceil( (double) (d->fdb->num_entries-limit) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
 	}
 
 	if(no_db==TRUE){	//mi basta scorrere tutti i num_entries file_inodes[] di  fdbr

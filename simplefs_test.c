@@ -204,15 +204,18 @@ int main(int agc, char** argv) {
 	//if(ret<0) perror("err ret of changeDir \n");
 
 	//fileSystem->current_directory_inode=toplevel->inode;
+	
 	ret=SimpleFS_listFiles(fileSystem);
 	if(ret<0) perror("err ret of list files");
 	
+	/*
 	ret=SimpleFS_remove(fileSystem, "wow.txt");
 	if(ret<0) perror("err ret of remove \n");
 	
 	ret=SimpleFS_remove(fileSystem, "paolino");
 	if(ret<0) perror("2: err ret of remove \n");
 	
+	*/
 	ret=SimpleFS_listFiles(fileSystem);
 	if(ret<0) perror("2: err ret of list files");
 	

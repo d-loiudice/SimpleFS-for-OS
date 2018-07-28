@@ -11,16 +11,7 @@
 #include "disk_driver.h"
 #include "inode.h"
 
-#define ERROR -1
-#define NUM_SUPER 1		//num block (just one) for super block
-#define NUM_BITMAPS 2	//fixed total num of blocks for bitmap structures
-#define NUM_INODES 5	//fixed total num of inodes
-#define INODES_PER_BLOCK 8	//how much inodes are in a block
-
-
 int fp=-1;
-int PageSize; 
-
 
 //LAVORO PER SINGOLO FILE (un file creato-scritto/letto-chiuso)TODO DA AMPLIARE
 
@@ -160,6 +151,11 @@ void DiskDriver_init(DiskDriver* diskDriver, const char* filename, int num_block
 // 0 otherwise
 int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	
+	//controllo di validità dell' indice block_num
+	if(block_num < 0 || block_num >= disk->header->bitmap_blocks){
+		fprintf(stderr,"%s -> block_num not valid",__func__);
+		return -1;
+		}
 	
 	//block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
 	char* bm=disk->bitmap_data_values;
@@ -187,7 +183,7 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	}
 	
 	memcpy(dest, blockRead, BLOCK_SIZE);
-	//cannot free block read why?
+	//TODEL cannot free block read why?
 	DiskDriver_flush(disk);
 	return 0;
 }
@@ -195,17 +191,14 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 // writes a block in position block_num, and alters the bitmap accordingly
 // returns -1 if operation not possible
 int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
-	/*
-	void* blockWrite = (void*) malloc(BLOCK_SIZE);
-	fseek(fp, block_num*BLOCK_SIZE, SEEK_SET);
-	memcpy(blockWrite, src, BLOCK_SIZE);
-	fwrite(blockWrite, BLOCK_SIZE, 1, fp);
-	fflush(fp);
-	free(blockWrite);
-	return 0;
-	*/
-	//TODO sempre il problema della bitmap non ancora implementata
+	
+	int ret;
 	//block_num+= NUM_SUPER+NUM_BITMAPS+NUM_INODES;
+	
+	if(block_num < 0 || block_num >= disk->header->bitmap_blocks){
+		fprintf(stderr,"%s -> block_num not valid",__func__);
+		return -1;
+		}
 	
 	BitMap* bm = (BitMap*)malloc(sizeof(BitMap));
 	bm->num_bits = disk->header->bitmap_blocks;
@@ -230,7 +223,11 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 	}
 	int vecchioValore = BitMap_get(bm, block_num, 0);
 	//fprintf(stderr, "DiskDriver_writeBlock() -> dopo aver scritto nel file : valore inodemap_blocks = %d\n", disk->header->inodemap_blocks);
-	BitMap_set(bm,block_num,1);
+	ret=BitMap_set(bm,block_num,1);
+	if(ret<0){
+		fprintf(stderr,"%s -> err in bitmap set",__func__);
+		return -1;
+		}
 	disk->header->dataFirst_free_block=BitMap_get(bm,0,0);
 	//fprintf(stderr, "DiskDriver_writeBlock() -> Data free blocks = %d\n", disk->header->dataFree_blocks);
 	
@@ -477,3 +474,5 @@ int DiskDriver_getFreeInode(DiskDriver* disk, int start)
 	}
 	return ret;
 }
+
+//TODEL free of bitmaps
