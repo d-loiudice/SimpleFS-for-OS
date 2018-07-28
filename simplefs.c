@@ -55,6 +55,7 @@ DirectoryHandle* SimpleFS_init(SimpleFS* fs, DiskDriver* disk)
 			{
 				// Setto i restanti campi della directory handle
 				directoryHandle->current_block = &(directoryHandle->fdb->header); // Sono nel primo blocco
+				fs->current_directory_inode = 0;
 			}
 			else
 			{
@@ -352,6 +353,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 			// Ho già il FirstDirectoryBlock allocato
 			while ( indexFiles < dimension )
 			{
+				fprintf(stderr, "SimpleFS_readDir() -> Inode letto a posizione %d: %d\n",indexFiles, d->fdb->file_inodes[indexFiles]);
 				// Se effettivamente è presente un indice inode valido relativo al file...
 				if ( d->fdb->file_inodes[indexFiles] != -1 )
 				{
@@ -929,6 +931,7 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 					d->current_block = &(fdbRead->header);
 					d->pos_in_dir = 0;
 					d->pos_in_block = 0;
+					d->sfs->current_directory_inode = indexInode;
 					ret = 0;
 				}
 				else
@@ -1547,16 +1550,17 @@ int SimpleFS_listFiles(SimpleFS* fs){
 */
 //remove the file specified with its blocks
 //returns -1 error, 0 on success
-static int single_remove(SimpleFS* fs,FirstFileBlock* ffb,Inode* inode){
+//static int single_remove(SimpleFS* fs,FirstFileBlock* ffb,Inode* inode){
+static int single_remove(DirectoryHandle* d,FirstFileBlock* ffb,Inode* inode){
 	int ret;
-	ret=DiskDriver_freeBlock(fs->disk,inode->primoBlocco);
+	ret=DiskDriver_freeBlock(d->sfs->disk,inode->primoBlocco);
 	if(ret<0) return -1;
 	FileBlock* fb;
 	int next_b=ffb->header.next_block;
 	while(next_b != -1){ //se il file ha piu di un blocco ,li cancello tutti
 			fb=malloc(sizeof(FileBlock));
 			//libero il next_b-esimo blocco del file
-			ret=DiskDriver_freeBlock(fs->disk,next_b);
+			ret=DiskDriver_freeBlock(d->sfs->disk,next_b);
 			if(ret<0){
 				free(fb);
 				return -1;
@@ -1566,14 +1570,15 @@ static int single_remove(SimpleFS* fs,FirstFileBlock* ffb,Inode* inode){
 			free(fb);
 			
 		}
-	
+
 		
 	return 0;
 }
 
 //removes all the childs of fdbr (both r files and d files)
 //returns 0 on success, -1 otherwise
-static int rec_remove(SimpleFS* fs,FirstDirectoryBlock* fdbr,Inode* inode,int num_removed){
+//static int rec_remove(SimpleFS* fs,FirstDirectoryBlock* fdbr,Inode* inode,int num_removed){
+static int rec_remove(DirectoryHandle* d, FirstDirectoryBlock* fdbr, Inode* inode, int num_removed){
 	int ret;
 	//num_removed= r_remove(fs,fdbr->file_inodes);
 	//if(num_removed < 0) return -1;
@@ -1592,38 +1597,45 @@ static int rec_remove(SimpleFS* fs,FirstDirectoryBlock* fdbr,Inode* inode,int nu
 	for(num_block_dir=0;index_block>=0;num_block_dir++){
 	
 		if(num_block_dir != 0){
-			ret=DiskDriver_readBlock(fs->disk,dbr,index_block);	
+			//ret=DiskDriver_readBlock(fs->disk,dbr,index_block);	
+			ret=DiskDriver_readBlock(d->sfs->disk,dbr,index_block);	
 			if(ret<0) return -1;
 		}
 		for(i=0;i<limit;i++){
 			if(fdbr->file_inodes[i] < 0)
 				continue;
 			
-			ret=DiskDriver_readInode(fs->disk,in,fdbr->file_inodes[i]);
+			//ret=DiskDriver_readInode(fs->disk,in,fdbr->file_inodes[i]);
+			ret=DiskDriver_readInode(d->sfs->disk,in,fdbr->file_inodes[i]);
 			if(ret<0) return -1;
 			
 			if(in->tipoFile=='r'){	//è un file e va eliminato
-				ret=DiskDriver_readBlock(fs->disk,ffb,in->primoBlocco);
+				ret=DiskDriver_readBlock(d->sfs->disk,ffb,in->primoBlocco);
 				if(ret<0) return -1;
-				ret=single_remove(fs,ffb,in);
+				//ret=single_remove(fs,ffb,in);
+				ret=single_remove(d,ffb,in);
 				if(ret<0) return -1;
 				fdbr->file_inodes[i]=-1;
-				ret=DiskDriver_writeBlock(fs->disk,fdbr,in->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+				ret=DiskDriver_writeBlock(d->sfs->disk,fdbr,in->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
 				if(ret<0) return -1;
 				num_removed++;
 			}
 			else if (in->tipoFile=='d'){	//dfs ricorsiva per cancellazione sotto cartelle e sottofile
-				ret=DiskDriver_readBlock(fs->disk,fdbr,in->primoBlocco);
+				//ret=DiskDriver_readBlock(fs->disk,fdbr,in->primoBlocco);
+				ret=DiskDriver_readBlock(d->sfs->disk,fdbr,in->primoBlocco);
 				if(ret<0) return -1;
-				rec_remove(fs,fdbr,in,num_removed);	//ricorsione
-				ret=DiskDriver_freeBlock(fs->disk,in->primoBlocco);
+				//rec_remove(fs,fdbr,in,num_removed);	//ricorsione
+				rec_remove(d,fdbr,in,num_removed);	//ricorsione
+				ret=DiskDriver_freeBlock(d->sfs->disk,in->primoBlocco);
 				if(ret<0) return -1;
 				}
 			else{
 				fprintf(stderr,"not recognized type of file\n");
 				return -1;
 			}
-			
+			ret = DiskDriver_freeInode(d->sfs->disk, fdbr->file_inodes[i]);
+			if ( ret < 0 ) return -1;
+			fdbr->file_inodes[i]=-1;
 		}
 		if(num_block_dir==0)
 			index_block=fdbr->header.next_block;
@@ -1648,16 +1660,19 @@ static int rec_remove(SimpleFS* fs,FirstDirectoryBlock* fdbr,Inode* inode,int nu
 // if a file removes simply that file
 // NB: if a file is removed in a dir, you have to put -1  
 // value in file_inodes[i] of that dir, at the index i of the file
-int SimpleFS_remove(SimpleFS* fs, char* filename){
+//int SimpleFS_remove(SimpleFS* fs, char* filename){
+int SimpleFS_remove(DirectoryHandle* d, char* filename){
 	int ret;
-	if (fs==NULL || fs->disk==NULL || filename==NULL || strcmp(filename,"")==0){
+	if (d->sfs==NULL || d->sfs->disk==NULL || filename==NULL || strcmp(filename,"")==0){
 		perror("parameter(s) not correct");
 		return -1;
 		}
-	int in_index=fs->current_directory_inode;
+	//int in_index=fs->current_directory_inode;
+	int in_index = d->inode;
 	assert(in_index >= 0);
 	
 	Inode* inode=malloc(sizeof(Inode));
+	/*
 	ret= DiskDriver_readInode(fs->disk,inode,in_index);	//leggo l' inode della cur. dir.
 	if(ret<0) return -1;
 	fprintf(stderr,"SimpleFS_remove() -> Letto inode %d della current directory\n",in_index);
@@ -1673,7 +1688,7 @@ int SimpleFS_remove(SimpleFS* fs, char* filename){
 	ret=DiskDriver_readBlock(fs->disk,fdbr,block_index);	// leggo il primo blocco dir. della cur dir
 	if(ret<0) return -1;
 	assert(fdbr!=NULL);
-	
+	*/
 	//scorro la dir. corrente per vedere se trovo il file con name filename e se è un file o una dir
 	int i;
 	int limit= (BLOCK_SIZE
@@ -1690,41 +1705,57 @@ int SimpleFS_remove(SimpleFS* fs, char* filename){
 	int n_block=0,num_db=0;
 	
 
-	if(fdbr->num_entries <= limit){	//basta il fdb
+	if(d->fdb->num_entries <= limit){	//basta il fdb
 		no_db=TRUE;
 	}
 	else{  //c è bisogno anche dei db
 		no_db=FALSE;
 		//calcolo il numero di db che devo scorrere
-		num_db= ceil( (fdbr->num_entries-limit) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
+		//num_db= ceil( (fdbr->num_entries-limit) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
+		num_db= ceil( (d->fdb->num_entries-limit) / ((BLOCK_SIZE-sizeof(BlockHeader))/sizeof(int)) );
 	}
 
 	if(no_db==TRUE){	//mi basta scorrere tutti i num_entries file_inodes[] di  fdbr
-		for(i=0;i< fdbr->num_entries; i++){
-			
-			ret=DiskDriver_readInode(fs->disk,inode,fdbr->file_inodes[i]);
+		//for(i=0;i< fdbr->num_entries; i++){
+		for(i=0; i< d->fdb->num_entries; i++){	
+			//ret=DiskDriver_readInode(fs->disk,inode,fdbr->file_inodes[i]);
+			ret = DiskDriver_readInode(d->sfs->disk, inode, d->fdb->file_inodes[i]);
 			if(ret<0) return -1;
-			if(fdbr->file_inodes[i] < 0) continue;
+			//if(fdbr->file_inodes[i] < 0) continue;
+			if(d->fdb->file_inodes[i] < 0) continue;
 			
 			if(inode->tipoFile=='r'){ //è un file
-				ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
+				ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
 				if(strcmp(ffb->fcb.name,filename)==0){	//trovato il file e basta rimuoverlo
 					found_file=TRUE;
 					fprintf(stderr,"%s -> trovato il file %s \n",__func__,ffb->fcb.name);
-					single_remove(fs,ffb,inode);
-					fdbr->file_inodes[i]=-1;
-					ret=DiskDriver_writeBlock(fs->disk,fdbr,inode->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+					single_remove(d,ffb,inode);
+					printf("SimpleFS_remove() -> sono nella cartella %s\n", d->fdb->fcb.name);
+					//fdbr->file_inodes[i]=-1;
+					// Libero l'inode dall'inodemap
+					ret = DiskDriver_freeInode(d->sfs->disk, d->fdb->file_inodes[i]);
+					if ( ret < 0 ) return -1;
+					d->fdb->file_inodes[i]=-1;
+					// Decremento il numero di file all'interno della cartella
+					d->fdb->num_entries--;
+					fprintf(stderr, "SimpleFS_remove() -> setto a -1 il file_inodes[%d]\n", i);
+					
+					
+					//ret=DiskDriver_writeBlock(fs->disk,fdbr,inode->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+					ret = DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk);
+					//fprintf(stderr, "SimpleFS_remove() -> aggiorno il blocco del padre: %d", inode->primoBlocco);
 					if(ret<0) return -1;
 					break;
 					}
 			}
 			else if (inode->tipoFile=='d'){	//è una dir
-				ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+				//ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+				ret=DiskDriver_readBlock(d->sfs->disk,fdb,inode->primoBlocco);
 				if(ret<0) return -1;
 				if(strcmp(fdb->fcb.name,filename)==0){	//trovata la dir con name filename , eliminaz. ricorsiva
 					found_file=TRUE;
 					fprintf(stderr,"%s -> trovata la directory %s \n",__func__,fdb->fcb.name);
-					rec_remove(fs,fdb,inode,0);
+					rec_remove(d,fdb,inode,0);
 					break;
 					}
 				}
@@ -1738,29 +1769,35 @@ int SimpleFS_remove(SimpleFS* fs, char* filename){
 		fprintf(stderr,"%s -> Necessaria scansione dei db successivi (num_entries>limit) \n",__func__);
 		for(i=0;i< limit; i++){	//leggo sempre tutti i file_inodes[] del primo blocco
 			
-			ret=DiskDriver_readInode(fs->disk,inode,fdbr->file_inodes[i]);
+			//ret=DiskDriver_readInode(fs->disk,inode,fdbr->file_inodes[i]);
+			ret=DiskDriver_readInode(d->sfs->disk,inode,d->fdb->file_inodes[i]);
 			if(ret<0) return -1;
-			if(fdbr->file_inodes[i] < 0) continue;
+			//if(fdbr->file_inodes[i] < 0) continue;
+			if(d->fdb->file_inodes[i] < 0) continue;
 			
 			if(inode->tipoFile=='r'){ //è un file
-				ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
+				//ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
+				ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
 				if(strcmp(ffb->fcb.name,filename)==0){	//trovato il file e basta rimuoverlo
 					found_file=TRUE;
 					fprintf(stderr,"%s -> trovato il file %s \n",__func__,ffb->fcb.name);
-					single_remove(fs,ffb,inode);
-					fdbr->file_inodes[i]=-1;
-					ret=DiskDriver_writeBlock(fs->disk,fdbr,inode->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+					single_remove(d,ffb,inode);
+					//fdbr->file_inodes[i]=-1;
+
+					//ret=DiskDriver_writeBlock(d->sfs->disk,d->fdb,d->);	//aggiorno la fdbr con la file_inodes cambiata
+					ret = DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk);
 					if(ret<0) return -1;
 					break;
 					}
 			}
 			else if (inode->tipoFile=='d'){	//è una dir
-				ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+				//ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+				ret=DiskDriver_readBlock(d->sfs->disk,fdb,inode->primoBlocco);
 				if(ret<0) return -1;
 				if(strcmp(fdb->fcb.name,filename)==0){	//trovata la dir con name filename , eliminaz. ricorsiva
 					found_file=TRUE;
 					fprintf(stderr,"%s -> trovata la directory %s \n",__func__,fdb->fcb.name);
-					rec_remove(fs,fdb,inode,0);
+					rec_remove(d,fdb,inode,0);				
 					break;
 					}
 				}
@@ -1768,30 +1805,42 @@ int SimpleFS_remove(SimpleFS* fs, char* filename){
 				fprintf(stderr,"SimpleFS_remove() -> not recognized tipoFile");
 				return -1;
 				}
+			//Libero l'inode
+			ret = DiskDriver_freeInode(d->sfs->disk, d->fdb->file_inodes[i]);
+			if ( ret < 0 ) return -1;
+			d->fdb->file_inodes[i]=-1;
 		}
-		int mancanti_lettura= fdbr->num_entries-limit;
-		n_block=fdbr->header.next_block;
+		//int mancanti_lettura= fdbr->num_entries-limit;
+		int mancanti_lettura= d->fdb->num_entries-limit;
+		//n_block=fdbr->header.next_block;
+		n_block=d->fdb->header.next_block;
 		if(n_block<0) return -1;
 		//passo ai num_db blocchi restanti
 		int j;
 		for(i=0;i < num_db;i++){
 			
-			ret=DiskDriver_readBlock(fs->disk,dbr,n_block);
+			//ret=DiskDriver_readBlock(fs->disk,dbr,n_block);
+			ret=DiskDriver_readBlock(d->sfs->disk,dbr,n_block);
 			if(ret<0) return -1;
 			
 			for(j=0;j< limit; j++){	//e poi leggo tutti i file_inodes[] dei blocchi successivi
 				if(mancanti_lettura == 0) break;
-				ret=DiskDriver_readInode(fs->disk,inode,dbr->file_inodes[j]);
+				//ret=DiskDriver_readInode(fs->disk,inode,dbr->file_inodes[j]);
+				ret=DiskDriver_readInode(d->sfs->disk,inode,dbr->file_inodes[j]);
 				if(dbr->file_inodes[j] < 0) continue;
-				ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
+				//ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
+				ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
 				if(ret<0) return -1;
 				if(inode->tipoFile=='r'){ //è un file
-					ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
+					//ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
+					ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
 					if(strcmp(ffb->fcb.name,filename)==0){	//trovato il file e basta rimuoverlo
 						found_file=TRUE;
-						single_remove(fs,ffb,inode);
+						single_remove(d,ffb,inode);
 						dbr->file_inodes[j]=-1;
-						ret=DiskDriver_writeBlock(fs->disk,fdbr,inode->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+						//ret=DiskDriver_writeBlock(fs->disk,fdbr,inode->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+						//ret=DiskDriver_writeBlock(d->sfs->disk,fdbr,inode->primoBlocco);	//aggiorno la fdbr con la file_inodes cambiata
+						ret = DiskDriver_writeBlock(d->sfs->disk, dbr, n_block);
 						if(ret<0) return -1;
 						break;
 						}
@@ -1799,11 +1848,12 @@ int SimpleFS_remove(SimpleFS* fs, char* filename){
 				}
 				else if (inode->tipoFile=='d'){	//è una dir
 					
-					ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+					//ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
+					ret=DiskDriver_readBlock(d->sfs->disk,fdb,inode->primoBlocco);
 					if(ret<0) return -1;
 					if(strcmp(fdb->fcb.name,filename)==0){	//trovata la dir con name filename , eliminaz. ricorsiva
 						found_file=TRUE;
-						rec_remove(fs,fdb,inode,0);
+						rec_remove(d,fdb,inode,0);
 						break;
 						}
 					}
@@ -1824,7 +1874,7 @@ int SimpleFS_remove(SimpleFS* fs, char* filename){
 	free(ffb);	
 	free(fdb);
 	free(dbr);
-	free(fdbr);
+	//free(fdbr);
 	free(inode);
 	
 	if(!found_file){

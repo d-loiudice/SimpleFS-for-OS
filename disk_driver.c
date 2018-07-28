@@ -228,14 +228,21 @@ int DiskDriver_writeBlock(DiskDriver* disk, void* src, int block_num) {
 		perror("ERR:");
 		return -1;
 	}
+	int vecchioValore = BitMap_get(bm, block_num, 0);
 	//fprintf(stderr, "DiskDriver_writeBlock() -> dopo aver scritto nel file : valore inodemap_blocks = %d\n", disk->header->inodemap_blocks);
 	BitMap_set(bm,block_num,1);
 	disk->header->dataFirst_free_block=BitMap_get(bm,0,0);
 	//fprintf(stderr, "DiskDriver_writeBlock() -> Data free blocks = %d\n", disk->header->dataFree_blocks);
-	if( disk->header->dataFree_blocks-- < 0 ){
+	
+	if ( vecchioValore == 0 ){
+		// Se era un blocco libero decremento il numero di blocchi data liberi
+		disk->header->dataFree_blocks--;
+	}
+	
+	/*if( disk->header->dataFree_blocks-- < 0 ){
 		perror("data free blocks got negative");
 		return -1;
-	}
+	}*/
 	
 	free(bm);
 	DiskDriver_flush(disk);
@@ -410,7 +417,7 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 					// Aggiorno il dato degli inode liberi del primo inode libero nel caso fosse precedentemente libero
 					if ( vecchioValore == 0 )
 					{
-						//
+						disk->header->inodeFree_blocks--;
 					}
 					ret = 0;
 				}
@@ -427,16 +434,25 @@ int DiskDriver_freeInode(DiskDriver* disk, int block_num)
 {
 	int ret = -1;
 	BitMap* bitmapInode;
+	int vecchioValore;
 	// Verifica che l'indice dell'inode esista
 	if ( block_num >= 0 && block_num < disk->header->inodemap_blocks ) 
 	{
 		bitmapInode = (BitMap*)malloc(sizeof(BitMap));
 		bitmapInode->num_bits = disk->header->inodemap_blocks;
 		bitmapInode->entries = disk->bitmap_inode_values;
+		vecchioValore = BitMap_get(bitmapInode, block_num, 0);
+		printf("DiskDriver_freeInode() -> vecchioValore = %d blocco cercato = %d\n", vecchioValore, block_num);
 		// Setto che nell'indice indicato l'inode è libero
 		if ( BitMap_set(bitmapInode, block_num, 0) == 0 )
 		{
 			// OK
+			// Se il vecchio valore era 1 allora si è liberato un inode 
+			// e incremento il valore nell'header
+			if ( vecchioValore == block_num )
+			{
+				disk->header->inodeFree_blocks++;
+			}
 			ret = 0;
 		}
 	}

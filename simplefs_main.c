@@ -28,10 +28,11 @@ int main(int na, char **va)
 		if ( disk != NULL) printf("4: Create a new directory\n");
 		if ( disk != NULL) printf("5: Change directory\n");
 		if ( disk != NULL) printf("6: Show the files in the current directory\n");
-		if ( disk != NULL) printf("7: Open an existent file\n");
-		if ( fileAperto != NULL ) printf("8: Write something at the position \n");
-		if ( fileAperto != NULL ) printf("9: Read something at the position \n");
-		if ( fileAperto != NULL ) printf("10: Seek in file\n");
+		if ( disk != NULL) printf("7: Delete a file or a directory\n");
+		if ( disk != NULL) printf("8: Open an existent file\n");
+		if ( fileAperto != NULL ) printf("9: Write something at the position \n");
+		if ( fileAperto != NULL ) printf("10: Read something at the position \n");
+		if ( fileAperto != NULL ) printf("111: Seek in file\n");
 		printf("99: Quit\n");
 		printf("\nEnter a value: ");
 		scanf("%d", &comando);
@@ -184,6 +185,69 @@ int main(int na, char **va)
 				free(contenutoDirectory);
 				break;
 				
+			// Rimuovi file o cartella 
+			case 7:
+				if ( directoryAttuale != NULL )
+				{
+					do
+					{
+						printf("Select the name of the file or directory to remove: ");
+						scanf("%180s", comandoStringa);
+						getchar();
+					} while ( strlen(comandoStringa) < 1 );
+					if ( SimpleFS_remove(directoryAttuale, comandoStringa) != -1 )
+					{
+						printf("%s removed successfully\n", comandoStringa);
+					}
+					else
+					{
+						printf("Can't remove %s\n", comandoStringa);
+					}
+				}
+				else
+				{
+					printf("You aren't in a directory\n");
+				}
+				break;
+			
+			// Apri file
+			case 8:
+				
+				break;
+			
+			// Scrivi su file le cose lette da standard input
+			case 9:
+				break;
+				
+			// Stampa su schermo le cose lette dal file (numero byte indicato dallo standard input)
+			case 10:
+				break;
+				
+			// Spostati alla posizione indicata nello standard input nel file
+			case 11:
+				break;
+			
+			// Chiudi file aperto
+			case 12:
+				break;
+			
+			// Dati disco
+			case 50:
+				if ( disk != NULL )
+				{					
+					printf("Header disk: \n");
+					printf("Num total blocks: %d\n", disk->header->num_blocks);
+					printf("Num data blocks on bitmap: %d\n", disk->header->bitmap_blocks);
+					printf("Num inode on inode: %d\n", disk->header->inodemap_blocks);
+					printf("Num data blocks free: %d\n", disk->header->dataFree_blocks);
+					printf("Num inode free: %d\n", disk->header->inodeFree_blocks);
+					//printf("Num total blocks: %d", disk->header->num_blocks);
+				}
+				else
+				{
+					printf("Open a disk please\n");
+				}
+				break;
 			// Esci dall'applicazione
 			case 99:
 				printf("Goodbye!\n");
