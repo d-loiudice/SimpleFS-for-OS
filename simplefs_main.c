@@ -195,9 +195,7 @@ int main(int na, char **va)
 						scanf("%180s", comandoStringa);
 						getchar();
 					} while ( strlen(comandoStringa) < 1 );
-					//if ( SimpleFS_remove(directoryAttuale, comandoStringa) != -1 )
-					if ( SimpleFS_rm(directoryAttuale, comandoStringa) != -1 )
-					
+					if ( SimpleFS_remove(directoryAttuale, comandoStringa) != -1 )				
 					{
 						printf("%s removed successfully\n", comandoStringa);
 					}
