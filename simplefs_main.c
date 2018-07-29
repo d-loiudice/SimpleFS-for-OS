@@ -147,6 +147,7 @@ int main(int na, char **va)
 					if ( SimpleFS_changeDir(directoryAttuale, comandoStringa) != -1 )
 					{
 						// OK
+						//printf("inode attuale: %d\n", directoryAttuale->sfs->current_directory_inode);
 					}
 					else
 					{
@@ -343,7 +344,8 @@ int main(int na, char **va)
 			
 			// lista colorata
 			case 30:
-				SimpleFS_listFiles(fileSystem);
+				//printf("inode attuale list: %d\n", directoryAttuale->sfs->current_directory_inode);
+				SimpleFS_listFiles(directoryAttuale->sfs);
 				break;
 			
 			// Dati disco

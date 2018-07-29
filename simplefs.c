@@ -1142,6 +1142,7 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 					d->pos_in_block = 0;
 					d->sfs->current_directory_inode = indexInode;
 					ret = 0;
+					//fprintf(stderr, "SimpleFS_changeDir() -> modificato current directory inode in: %d\n", d->sfs->current_directory_inode);
 				}
 				else
 				{
@@ -1203,6 +1204,7 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 										d->current_block = &(fdbRead->header);
 										d->pos_in_dir = 0;
 										d->pos_in_block = 0;
+										d->sfs->current_directory_inode = indexInode;
 										ret = 0;
 										// OK
 									}
