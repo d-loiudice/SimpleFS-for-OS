@@ -44,34 +44,41 @@ int main(int na, char **va)
 		{
 			// Apertura/creazione disco con filesystem
 			case 1:
-				printf("Selected option number 1\n");
-				printf("1: Insert file name: ");
-				scanf("%s", comandoStringa);
-				getchar();
-				if ( access(comandoStringa, F_OK) != 0 )
+				if ( disk == NULL )
 				{
-					printf("File doesn't exist\n");
-					while ( numeroBlocchi < 23 )
+					printf("Selected option number 1\n");
+					printf("1: Insert file name: ");
+					scanf("%s", comandoStringa);
+					getchar();
+					if ( access(comandoStringa, F_OK) != 0 )
 					{
-						printf("Select the number of blocks (hard-coded) > 23:  ");
-						scanf("%d", &numeroBlocchi);
-						getchar();
+						printf("File doesn't exist\n");
+						while ( numeroBlocchi < 23 )
+						{
+							printf("Select the number of blocks (hard-coded) > 23:  ");
+							scanf("%d", &numeroBlocchi);
+							getchar();
+						}
 					}
+					else
+					{
+						printf("File exists\n");
+					}
+
+					disk = (DiskDriver*) malloc(sizeof(DiskDriver));
+					DiskDriver_init(disk, comandoStringa, numeroBlocchi);
+					fileSystem->disk = disk;
+					if ( numeroBlocchi != -1 )
+					{
+						printf("Formatto\n");
+						SimpleFS_format(fileSystem);
+					}
+					directoryAttuale = SimpleFS_init(fileSystem, disk);
 				}
 				else
 				{
-					printf("File exists\n");
+					printf("Can't open a new disk\n");
 				}
-
-				disk = (DiskDriver*) malloc(sizeof(DiskDriver));
-				DiskDriver_init(disk, comandoStringa, numeroBlocchi);
-				fileSystem->disk = disk;
-				if ( numeroBlocchi != -1 )
-				{
-					printf("Formatto\n");
-					SimpleFS_format(fileSystem);
-				}
-				directoryAttuale = SimpleFS_init(fileSystem, disk);
 				break;
 					
 			// Formattare un filesystem aperto
@@ -275,26 +282,24 @@ int main(int na, char **va)
 			case 10:
 				if ( fileAperto != NULL )
 				{
-					int num_bytes;
 					do
 					{
-						printf("Chose how many bytes to read: ");
-						scanf("%d", &num_bytes);
+						printf("How many bytes do you want to write at the current position? ");
+						scanf("%d", &numeroBytes);
 						getchar();
-						printf("Reading %d bytes\n",num_bytes);
-					} while ( num_bytes ==0 );
-					
-					char * toRead= malloc(sizeof(char) * num_bytes);
-					int toReadProva[4];
-					int readed=SimpleFS_read(fileAperto,toReadProva,num_bytes);
-					if( readed != -1){
-						printf("Read %d from %s: \n %s \n",readed,fileAperto->ffb->fcb.name,toRead);
+					} while(numeroBytes <= 0);
+					buffer = (char*) malloc((numeroBytes+1)*sizeof(char));
+					scritti = SimpleFS_read(fileAperto, buffer, numeroBytes);
+					if ( scritti != -1 )
+					{
+						printf("Read successfully %d on file %s\n", scritti, fileAperto->ffb->fcb.name);
+						buffer[numeroBytes] = 0;
+						printf("%s\n", buffer);
 					}
-					else{
-						printf("Err in read %s \n",fileAperto->ffb->fcb.name);
+					else
+					{
+						printf("Error in writing on %s\n", fileAperto->ffb->fcb.name);
 					}
-					
-					free(toRead);
 				}
 				else
 				{

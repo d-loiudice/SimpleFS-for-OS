@@ -1143,12 +1143,15 @@ int SimpleFS_seek(FileHandle* f, int pos){
 		// Iterazione per raggiungere il blocco da leggere
 		while ( f->current_block->block_in_file != num_block && bytes_read != -1 )
 		{
+			fprintf(stderr, "SimpleFS_seek() -> block_in_file = %d -- num_block = %d\n", f->current_block->block_in_file, num_block);
 			if ( f->current_block->block_in_file < num_block )
 			{
+				fprintf(stderr, "SimpleFS_seek() -> Devo andare avanti\n");
 				// Devo andare avanti
 				if ( f->current_block->next_block != -1 )
 				{
-					if ( DiskDriver_readBlock(f->sfs->disk, fileBlock, f->current_block->previous_block) )
+					fprintf(stderr, "SimpleFS_seek() -> lettura blocco data %d\n", f->current_block->next_block);
+					if ( DiskDriver_readBlock(f->sfs->disk, fileBlock, f->current_block->next_block) != -1)
 					{
 						// Se non sono già nel ffb, devo liberare la memoria
 						if ( f->current_block != &(f->ffb->header) ) 
@@ -1175,10 +1178,12 @@ int SimpleFS_seek(FileHandle* f, int pos){
 			}
 			else
 			{
+				fprintf(stderr, "SimpleFS_seek() -> Devo andare indietro\n");
 				// Devo andare indietro
 				if ( f->current_block->previous_block != -1 )
 				{
-					if ( DiskDriver_readBlock(f->sfs->disk, fileBlock, f->current_block->previous_block) )
+					fprintf(stderr, "SimpleFS_seek() -> lettura blocco data %d\n", f->current_block->previous_block);
+					if ( DiskDriver_readBlock(f->sfs->disk, fileBlock, f->current_block->previous_block) != -1 )
 					{
 						free(f->current_block);
 						f->current_block = malloc(sizeof(BlockHeader));
