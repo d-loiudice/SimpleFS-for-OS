@@ -298,7 +298,7 @@ int main(int na, char **va)
 					}
 					else
 					{
-						printf("Error in writing on %s\n", fileAperto->ffb->fcb.name);
+						printf("Error in reading on %s\n", fileAperto->ffb->fcb.name);
 					}
 				}
 				else

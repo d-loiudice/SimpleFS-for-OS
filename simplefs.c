@@ -584,11 +584,27 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 	f->current_block=&(ffb->header);
 	f->pos_in_file=0;
 	
-	
+	Inode* inodeAggiornamento = malloc(sizeof(Inode));
+	if ( DiskDriver_readInode(d->sfs->disk, inodeAggiornamento, f->inode) != -1 )
+	{
+		inodeAggiornamento->dataUltimoAccesso = time(NULL);
+		if ( DiskDriver_writeInode(d->sfs->disk, inodeAggiornamento, f->inode) != -1 )
+		{
+			// OK
+		}
+		else
+		{
+			fprintf(stderr, "SimpleFS_openFile() -> errore durante la scrittura dell'aggiornamento data ultimo accesso dell'inode %d\n", f->inode);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "SimpleFS_openFile() -> Errore durante lettura per l'aggiornamento data ultimo accesso dell'inode %d\n", f->inode);
+	}
+	free(inodeAggiornamento);
 	
 	return f;
-	
-	}
+}
 
 
 // closes a file handle (destroyes it)
@@ -825,106 +841,6 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 // read in the file, at current position size bytes and store them in data
 // returns the number of bytes read
 int SimpleFS_read(FileHandle* f, void* data, int size){
-	/*
-	
-		
-	//read the file blocks of the file
-	int limit,ret;
-	unsigned char is_ffb;
-	void* dest;
-	char* d_data;
-	FileBlock* fb_to_r= malloc(sizeof(FileBlock));
-	FirstFileBlock* ffb_to_r= malloc(sizeof(FirstFileBlock));
-	if(f->current_block->block_in_file==0){
-		is_ffb=TRUE;
-		limit=BLOCK_SIZE - sizeof(BlockHeader)-sizeof(FileControlBlock);
-		dest=ffb_to_r;
-		d_data=ffb_to_r->data;
-	 }
-	else{
-		is_ffb=FALSE;
-		limit=BLOCK_SIZE - sizeof(BlockHeader);
-		dest=fb_to_r;
-		d_data=fb_to_r->data;
-	}
-	
-	int data_block_num=f->current_block->block_in_file;
-	int bytes_read=0;	
-	
-	// Se mi basta leggere in un solo blocco 
-	int num_blocks_to_read=1;
-	if(size <= limit){
-		if(DiskDriver_readBlock(f->sfs->disk,dest,data_block_num) < 0){
-			perror("cannot read block");
-			return -1;
-		}
-		memcpy(data,d_data,size);
-		bytes_read = size;
-	}
-	
-	// Se ho piu blocchi da dover leggere
-	else{
-		if(is_ffb)
-			num_blocks_to_read= (int)ceil((double) ( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )
-			/(BLOCK_SIZE- sizeof(BlockHeader)) ) + 1;
-		else
-			num_blocks_to_read= size/(BLOCK_SIZE-sizeof(BlockHeader) )+ 1;	//conto i sotto blocchi
-		
-		int new_size=BLOCK_SIZE-sizeof(BlockHeader);	//devo scrivere l intero blocco
-		int i=0;
-		while(i < num_blocks_to_read){
-			if(i == num_blocks_to_read-1) // ultimo blocco da scrivere
-				new_size=size - bytes_read;
-			
-			//carico il blocco, mi muovo di new_size in new_size sul data
-			//fornito e scrivo sempre new_size su fwb->data tranne per ultimo blocco
-			
-			if(DiskDriver_readBlock(f->sfs->disk,dest,data_block_num) < 0){
-				perror("cannot write block");
-				return -1;
-			}
-			memcpy(data+bytes_read,d_data,new_size);
-			
-			bytes_read+=new_size;
-			if(i == num_blocks_to_read-1) break;	//ho scritto l ultimo
-			
-			//preparo il blockHeader per il prossimo blocco
-			FileBlock* fbr=malloc(sizeof(FileBlock));
-			ret= DiskDriver_readBlock(f->sfs->disk,fbr,
-						f->current_block->next_block);	//file block letto
-			if(ret< 0){
-				perror("errore in readblock di write simple fs");
-				return -1;
-				}
-			
-			memcpy(&fb_to_r->header,&fbr->header,sizeof(BlockHeader)); //ho preso l head del blocco successivo
-			
-			free(fbr);	//free di fbr puo causare  seg_fault
-			data_block_num=fbr->header.block_in_file;
-			
-			i++;
-			}
-		}
-	
-	
-	//data_block_num=f->current_block->next_block;
-	//if(data_block_num < 0)	//reached end of the file
-
-	
-	
-	//update inode info of the file
-	in_read->dataUltimoAccesso=time(NULL);	//update ultimo accesso
-	if(DiskDriver_writeInode(f->sfs->disk,in_read,in_block_num) <0){
-		perror("updating inode failed");
-		return -1;
-	}
-	
-	free(in_read);
-	free(ffb_to_r);
-	free(fb_to_r);
-	
-	return bytes_read;
-	*/
 	if(f==NULL || f->ffb ==NULL || size <0 || data==NULL){
 		perror("not valid parameter(s)");
 		return -1;
@@ -1062,7 +978,7 @@ int SimpleFS_read(FileHandle* f, void* data, int size){
 	}
 	//aggiornamento inode
 	f->pos_in_file = posizione;
-	in_read->dataUltimoAccesso=time(NULL);
+	//in_read->dataUltimaModifica=time(NULL);
 	if (posizione > in_read->dimensioneFile)
 	{
 		in_read->dimensioneFile = posizione;
@@ -1471,6 +1387,21 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 		}*/
 	}
 	
+	if ( inodeRead != NULL )
+	{
+		// Aggiorno l'inode, ho il suo indice in index_inode
+		inodeRead->dataUltimoAccesso = time(NULL);
+		if ( DiskDriver_writeInode(d->sfs->disk, inodeRead, indexInode) != -1 )
+		{
+			// OK
+			fprintf(stderr, "SimpleFS_changeDir() -> aggiornato data ultimo accesso di inode %d\n", indexInode);
+		}
+		else
+		{
+			fprintf(stderr, "SimpleFS_changeDir() -> errore nell'aggiornamento data ultimo accesso di inode %d\n", indexInode);
+		}
+	}
+	
 	return ret;
 }
 /*
@@ -1506,13 +1437,14 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 	bitmapInode->entries = d->sfs->disk->bitmap_inode_values;
 	bitmapData->num_bits = d->sfs->disk->header->bitmap_blocks;
 	bitmapData->entries = d->sfs->disk->bitmap_data_values;
-	Inode* inode;
+	Inode* inode = NULL;
 	int indexInode;
 	int indexData;
 	int i;
+	int ret = -1;
 	int exist = 0;
 	int dimensioneArray;
-	FirstDirectoryBlock* firstDirectoryBlock;
+	FirstDirectoryBlock* firstDirectoryBlock = NULL;
 	// Inizializzaizone per registrare i nomi della directory
 	char** contenutoDirectory = (char**)malloc(d->fdb->num_entries*sizeof(char*));
 	i = 0;
@@ -1533,6 +1465,7 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 		}
 		i++;
 	}
+	free(contenutoDirectory);
 	if ( exist == 0 )
 	{
 		if ( d->sfs->disk->header->inodeFree_blocks > 0 ) {
@@ -1586,8 +1519,27 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 							{
 								// OK
 								fprintf(stderr, "SimpleFS_mkDir() -> Ora ci sono %d files\n", d->fdb->num_entries);
+								// Aggiorno la data ultima modifica dell'inode della cartella padre
+								if ( DiskDriver_readInode(d->sfs->disk, inode, d->inode) != -1 )
+								{
+									// Modifico la data ultima modifica dell'inode
+									inode->dataUltimaModifica = time(NULL);
+									// Riscrivo l'inode
+									if ( DiskDriver_writeInode(d->sfs->disk, inode, d->inode) != -1)
+									{
+										ret = 0;
+									}
+									else
+									{
+										fprintf(stderr, "SimpleFS_mkdir() -> errore durante la scrittura dell'aggiornamento ultima modifica dell'inode %d\n", d->inode);
+									}
+								}
+								else
+								{
+									fprintf(stderr, "SimpleFS_mkdir() -> errore durante la lettura per l'aggiornamento ultima modifica dell'inode %d\n", d->inode);
+								}
 								//DiskDriver_flush(d->sfs->disk);
-								return 0;
+								//return 0;
 							}
 							else
 							{
@@ -1597,7 +1549,7 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 						}
 						else  {
 							fprintf(stderr, "SimpleFS_mkDir impossibile inserire inode nella directory d \n");
-							return -1;
+							//return -1;
 						}
 					}
 					else
@@ -1608,22 +1560,20 @@ int SimpleFS_mkDir(DirectoryHandle* d, char* dirname) {
 				}
 				else {
 					fprintf(stderr, "Errore durante la scrittura dell'inode\n");
-					return -1;
+					//return -1;
 				}
-				
-
-
-
 			}
-
 		}
 	}
 	else
 	{
 		fprintf(stderr, "SimpleFS_mkDir() -> La directory già esiste\n");
 	}
-	return -1; 
-
+	//return -1; 
+	if ( inode != NULL ) free(inode);
+	if ( firstDirectoryBlock != NULL ) free(firstDirectoryBlock);
+	DiskDriver_flush(d->sfs->disk);
+	return ret;
 }
 
 // Funzione ausiliare per inserire gli inode nelle directory ( ricercando un -1 da poter rimpiazzare )
@@ -2377,6 +2327,7 @@ int SimpleFS_remove(DirectoryHandle* d, char* filename){
 						ret = DiskDriver_writeBlock(d->sfs->disk, d->fdb, d->fdb->fcb.block_in_disk);
 						//fprintf(stderr, "SimpleFS_remove() -> aggiorno il blocco del padre: %d", inode->primoBlocco);
 						if(ret<0) return -1;
+						
 						break;
 					}
 					else
@@ -2639,77 +2590,28 @@ int SimpleFS_remove(DirectoryHandle* d, char* filename){
 		fprintf(stderr,"SimpleFS_remove() -> file not found \n");
 		return -1;
 	}
+	
+	Inode* inodeAggiornamento = malloc(sizeof(Inode));
+	if ( DiskDriver_readInode(d->sfs->disk, inodeAggiornamento, d->inode) != -1 )
+	{
+		inodeAggiornamento->dataUltimoAccesso = time(NULL);
+		if ( DiskDriver_writeInode(d->sfs->disk, inodeAggiornamento, d->inode) != -1 )
+		{
+			// OK
+		}
+		else
+		{
+			fprintf(stderr, "SimpleFS_remove() -> errore durante la scrittura dell'aggiornamento data ultimo accesso dell'inode %d\n", d->inode);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "SimpleFS_remove() -> Errore durante lettura per l'aggiornamento data ultimo accesso dell'inode %d\n", d->inode);
+	}
+	free(inodeAggiornamento);
+
 	fprintf(stderr,"%s -> eliminazione completata \n",__func__);
 	DiskDriver_flush(d->sfs->disk);
 	return 0;
-	
-	
-	
-	
-	
-	
-	
-	/*
-	while(n_block >= 0 ){	//scorro tutti i blocchi della directory
-		for(i=0;i<limit;i++){	//scorro tutti i file_inodes[] nel blocco
-			fprintf(stderr,"SimpleFS_remove() ->  Analizzo blocco: %d, di: %s, con file_inodes[%d]\n",n_block,fdbr->fcb.name,i);
-			
-			if(n_block==0){ //è fdbr e ne carico l inode i-es
-				
-				ret=DiskDriver_readInode(fs->disk,inode,fdbr->file_inodes[i]);	//inode overwritten
-				n_block=fdbr->header.next_block;
-			}
-			else{ //è dbr e ne carico l inode i-es
-				
-				ret=DiskDriver_readInode(fs->disk,inode,dbr->file_inodes[i]); //inode overwritten
-				n_block=dbr->header.next_block;
-			}
-			if(ret<0) return -1;
-			if(inode->tipoFile=='r'){ //è un file
-				ffb=malloc(sizeof(FirstFileBlock));
-				ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);	//mi basta il primo blocco quello con fcb
-				if(strcmp(ffb->fcb.name,filename)==0){	//trovato il file e basta rimuoverlo
-					single_remove(fs,ffb,inode);
-					found_file=TRUE;
-					break;
-					}
-				free(ffb);
-			}
-			else if (inode->tipoFile=='d'){	//è una dir
-				FirstDirectoryBlock* fdb= malloc(sizeof(FirstDirectoryBlock));
-				ret=DiskDriver_readBlock(fs->disk,fdb,inode->primoBlocco);
-				if(ret<0) return -1;
-				if(strcmp(fdb->fcb.name,filename)==0){	//trovata la dir con name filename , eliminaz. ricorsiva
-					rec_remove(fs,fdb,inode,0);
-					found_file=TRUE;
-					break;
-					}
-				free(fdb);
-				}
-			else{
-				perror("not recognized tipoFile");
-				return -1;
-				}
-				
-		}
-		if(n_block < 0 || found_file)
-			break;
-			
-		ret=DiskDriver_readBlock(fs->disk,dbr,n_block);	//continuo la ricerca su altri blocchi (carico dbr)
-	}
-	if(!found_file){
-		fprintf(stderr,"SimpleFS_remove() -> File to remove: %s not found \n",filename);
-		return -1;
-			}
-	free(dbr);
-	free(inode);
-	free(fdbr);
-	return 0;
-	
-	
-	*/
-	}
-
-
-  
+}
 
