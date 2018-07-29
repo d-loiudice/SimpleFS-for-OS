@@ -597,10 +597,10 @@ int SimpleFS_close(FileHandle* f){
 		fprintf(stderr,"SimpleFS_close -> file not valid (null)	\n");
 		return -1;
 	}
-	free(f->current_block);
+	if (f->current_block != &(f->ffb->header)) free(f->current_block);
 	free(f->ffb);
 	free(f);
-	printf("ciaone\n");
+	//printf("ciaone\n");
 	return 1;
 
 }
@@ -629,95 +629,6 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 		perror("not valid tipoFile");
 		return -1;
 		}
-	
-	
-	//scrittura su blocco
-	/*
-	int limit;	//quanto puo entrare nel blocco considerando l header 
-	unsigned char is_ffb;	//boolean per sapere se siamo nel primo blocco
-	if(f->current_block->block_in_file==0){ //abbiamo un fcb e siamo quindi in ffb
-		limit=BLOCK_SIZE - sizeof(BlockHeader)-sizeof(FileControlBlock);
-		is_ffb=TRUE;
-	}
-	else{
-		limit=BLOCK_SIZE - sizeof(BlockHeader);
-		is_ffb=FALSE;
-	}
-	
-	FileBlock* fbw= malloc(sizeof(FileBlock)); 	//alloco blocco che scriverò
-	FirstFileBlock* ffbw= malloc(sizeof(FirstFileBlock));
-	void* dest; 
-	char* d_data;
-	if(is_ffb){	//parto dal primo blocco
-		dest=ffbw;
-		d_data=ffbw->data;
-		ffbw=f->ffb;	//prendo direttamente il ffb dall handle
-		}
-	
-	else{	//non parto dal primo blocco
-		dest=fbw;
-		d_data=fbw->data;
-		fbw->header= *(f->current_block);
-	}
-	
-	int num_blocks_to_write=0; //num blocchi su cui scriverò
-	int data_block_num=f->current_block->block_in_file;	//block num per la funz.
-	int bytes_written=0;
-	
-	
-	//Se mi basta sostituire un blocco solo
-	if(size <= limit ){	
-
-		memcpy(d_data,data,size);
-		if(DiskDriver_writeBlock(f->sfs->disk,dest,data_block_num) < 0){
-			perror("cannot write block");
-			return -1;
-		}
-		bytes_written=size;
-	}
-	
-	
-	//Se ho più blocchi su cui devo scrivere (almeno 2)
-	else{	
-		
-		if(is_ffb)
-			num_blocks_to_write= ceil( (double)( size-(BLOCK_SIZE - sizeof(FileControlBlock)-sizeof(BlockHeader) ) )
-			/(BLOCK_SIZE- sizeof(BlockHeader)) ) + 1;	//conto i sotto blocchi
-		else
-			num_blocks_to_write= size/(BLOCK_SIZE-sizeof(BlockHeader) )+ 1;	//conto i sotto blocchi
-		int new_size=BLOCK_SIZE-sizeof(BlockHeader);	//devo scrivere l intero blocco
-		int i=0;
-		while(i < num_blocks_to_write){
-			if(i == num_blocks_to_write-1) // ultimo blocco da scrivere
-				new_size=size - bytes_written;
-			
-			//carico il blocco, mi muovo di new_size in new_size sul data
-			//fornito e scrivo sempre new_size su fwb->data tranne per ultimo blocco
-			if(DiskDriver_writeBlock(f->sfs->disk,dest,data_block_num) < 0){
-				perror("cannot write block");
-				return -1;
-			}
-			memcpy(d_data,data+bytes_written,new_size);
-
-			bytes_written+=new_size;
-			if(i == num_blocks_to_write-1) break;	//ho scritto l ultimo
-			
-			//preparo il blockHeader per il prossimo blocco
-			FileBlock* fbr=malloc(sizeof(FileBlock));
-			ret= DiskDriver_readBlock(f->sfs->disk,fbr,f->current_block->next_block);	//file block letto
-			if(ret< 0){
-				perror("errore in readblock di write simple fs");
-				return -1;
-				}
-			
-			memcpy(&fbw->header,&fbr->header,sizeof(BlockHeader)); //ho preso l head del blocco successivo
-			
-			free(fbr);	//free di fbr puo causare  seg_fault
-			data_block_num=fbr->header.block_in_file;
-			
-			i++;
-		}
-	}*/
 	
 	int num_block;
 	int numeroBloccoAttuale;
@@ -1851,13 +1762,20 @@ int SimpleFS_listFiles(SimpleFS* fs){
 //static int single_remove(SimpleFS* fs,FirstFileBlock* ffb,Inode* inode){
 static int single_remove(DirectoryHandle* d,FirstFileBlock* ffb,Inode* inode){
 	int ret;
+	fprintf(stderr, "single_remove() -> Libero il primo blocco data %d\n", inode->primoBlocco);
 	ret=DiskDriver_freeBlock(d->sfs->disk,inode->primoBlocco);
 	if(ret<0) return -1;
 	FileBlock* fb;
 	int next_b=ffb->header.next_block;
 	while(next_b != -1){ //se il file ha piu di un blocco ,li cancello tutti
 			fb=malloc(sizeof(FileBlock));
+			ret = DiskDriver_readBlock(d->sfs->disk, fb, next_b);
+			if ( ret<0){
+				free(fb);
+				return -1;
+			}
 			//libero il next_b-esimo blocco del file
+			fprintf(stderr, "single_remove() -> Libero il blocco data %d\n", next_b);
 			ret=DiskDriver_freeBlock(d->sfs->disk,next_b);
 			if(ret<0){
 				free(fb);
@@ -1865,6 +1783,7 @@ static int single_remove(DirectoryHandle* d,FirstFileBlock* ffb,Inode* inode){
 			}
 			//passo al prox
 			next_b=fb->header.next_block;
+			fprintf(stderr, "single_remove() -> prossimo blocco data da liberare %d\n", next_b);
 			free(fb);
 			
 		}
