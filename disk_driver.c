@@ -432,6 +432,7 @@ int DiskDriver_writeInode(DiskDriver* disk, void* src, int block_num)
 // -1 if not possible
 int DiskDriver_freeInode(DiskDriver* disk, int block_num)
 {
+	fprintf(stderr, "DiskDriver_freeInode() -> si richiede di liberare %d\n", block_num);
 	int ret = -1;
 	BitMap* bitmapInode;
 	int vecchioValore;

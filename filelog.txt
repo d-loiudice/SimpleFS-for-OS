@@ -1,182 +1,594 @@
-FD: 3
-DiskDriver_init() -> dataFree_blocks = 277
-DiskDriver_init() -> inodeFree_blocks = 160
-BlockSize: 512
-FD: 3
-FD in diskdriver: 3
-SimpleFS_format() -> dopo aver inizializzato inode : valore inodemap_blocks = 160
-BitMap_set() -> setto posizione 0 a 1
-DiskDriver_writeInode() -> occupato un inode
-SimpleFS_format() -> dopo aver inizializzato i file_inodes dentro firstdirectoryblock : valore inodemap_blocks = 160
-BitMap_set() -> setto posizione 0 a 1
-DiskDriver_writeBlock() -> occupato un blocco data
-SimpleFS_format() -> valore inodemap_blocks = 160
 Ho letto il primo inode
-SimpleFS_readDir() -> numero files nella cartella = 0
-SimpleFS_createFile() -> allocato array con dimensione 0
-SimpleFS_readDir() -> numero files nella cartella = 0
-BitMap_set() -> setto posizione 1 a 1
-DiskDriver_writeInode() -> occupato un inode
-SimpleFS_mkdir() -> scritto su inode: 1
-BitMap_set() -> setto posizione 1 a 1
-DiskDriver_writeBlock() -> occupato un blocco data
-SimpleFS_mkdir() -> scritto su blocco: 1
-BitMap_set() -> setto posizione 0 a 1
-BitMap_set() -> setto posizione 0 a 1
-SimpleFS_mkDir() -> Ora ci sono 1 files
-SimpleFS_createFile() -> allocato array con dimensione 1
-SimpleFS_readDir() -> numero files nella cartella = 1
+SimpleFS_createFile() -> allocato array con dimensione 100
+SimpleFS_readDir() -> numero files nella cartella = 100
 SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcc380
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
 SimpleFS_readDir -> letto dal disco l'inode
 SimpleFS_readDir -> primo blocco dell'inode: 1
 SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> dir1 in posizione 0
-SimpleFS_createFile() -> blocchi data liberi: 275
-Primo blocco data trovato libero: 2
-BitMap_set() -> setto posizione 2 a 1
+SimpleFS_readDir() -> 1 in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 2 in posizione 1
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 3
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 3 in posizione 2
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 4
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 4 in posizione 3
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 5
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 5 in posizione 4
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 6
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 6 in posizione 5
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 7
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 7 in posizione 6
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 8
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 8 in posizione 7
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 9
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 9 in posizione 8
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 10
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 10 in posizione 9
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 11
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 11 in posizione 10
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 12
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 12 in posizione 11
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 13
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 13 in posizione 12
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 14
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 14 in posizione 13
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 15
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 15 in posizione 14
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 16
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 16 in posizione 15
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 17
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 17 in posizione 16
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 18
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 18 in posizione 17
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 19
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 19 in posizione 18
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 20
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 20 in posizione 19
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 21
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 21 in posizione 20
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 22
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 22 in posizione 21
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 23
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 23 in posizione 22
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 24
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 24 in posizione 23
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 25
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 25 in posizione 24
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 26
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 26 in posizione 25
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 27
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 27 in posizione 26
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 28
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 28 in posizione 27
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 29
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 29 in posizione 28
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 30
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 30 in posizione 29
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 31
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 31 in posizione 30
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 32
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 32 in posizione 31
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 33
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 33 in posizione 32
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 34
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 34 in posizione 33
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 35
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 35 in posizione 34
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 36
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 36 in posizione 35
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 37
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 37 in posizione 36
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 38
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 38 in posizione 37
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 39
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 39 in posizione 38
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 40
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 40 in posizione 39
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 41
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 41 in posizione 40
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 42
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 42 in posizione 41
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 43
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 43 in posizione 42
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 44
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 44 in posizione 43
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 45
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 45 in posizione 44
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 46
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 46 in posizione 45
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 47
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 47 in posizione 46
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 48
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 48 in posizione 47
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 49
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 49 in posizione 48
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 50
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 50 in posizione 49
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 51
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 51 in posizione 50
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 52
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 52 in posizione 51
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 53
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 53 in posizione 52
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 54
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 54 in posizione 53
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 55
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 55 in posizione 54
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 56
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 56 in posizione 55
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 57
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 57 in posizione 56
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 58
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 58 in posizione 57
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 59
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 59 in posizione 58
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 60
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 60 in posizione 59
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 61
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 61 in posizione 60
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 62
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 62 in posizione 61
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 63
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 63 in posizione 62
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 64
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 64 in posizione 63
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 65
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 65 in posizione 64
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 66
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 66 in posizione 65
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 67
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 67 in posizione 66
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 68
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 68 in posizione 67
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 69
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 69 in posizione 68
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 70
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 70 in posizione 69
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 71
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 71 in posizione 70
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 72
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 72 in posizione 71
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 73
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 73 in posizione 72
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 74
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 74 in posizione 73
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 75
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 75 in posizione 74
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 76
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 76 in posizione 75
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 77
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 77 in posizione 76
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 78
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 78 in posizione 77
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 79
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 79 in posizione 78
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 80
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 80 in posizione 79
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 81
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 81 in posizione 80
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 82
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 82 in posizione 81
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 83
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 83 in posizione 82
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 84
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 84 in posizione 83
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 85
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 85 in posizione 84
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 86
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 86 in posizione 85
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 87
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 87 in posizione 86
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 88
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 88 in posizione 87
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 89
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 89 in posizione 88
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba36feaf0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 90
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> 90 in posizione 89
+SimpleFS_readDir() -> Prossimo blocco = 92
+SimpleFS_readDir() -> Primo indice inode all'interno del nuovo blocco = 91
+SimpleFS_readDir() -> free blockHeader?
+SimpleFS_readDir() -> free blockHeader? OK
+SimpleFS_readDir() -> sono nel DirectoryBlock
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 0 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 91
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 91
+SimpleFS_readDir() -> Leggo il nome file numero 90
+SimpleFS_readDir() -> nome file = 91 da mettere nella posizione 90
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 1 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 92
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 93
+SimpleFS_readDir() -> Leggo il nome file numero 91
+SimpleFS_readDir() -> nome file = 92 da mettere nella posizione 91
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 2 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 93
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 94
+SimpleFS_readDir() -> Leggo il nome file numero 92
+SimpleFS_readDir() -> nome file = 93 da mettere nella posizione 92
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 3 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 94
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 95
+SimpleFS_readDir() -> Leggo il nome file numero 93
+SimpleFS_readDir() -> nome file = 94 da mettere nella posizione 93
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 4 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 95
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 96
+SimpleFS_readDir() -> Leggo il nome file numero 94
+SimpleFS_readDir() -> nome file = 95 da mettere nella posizione 94
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 5 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 96
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 97
+SimpleFS_readDir() -> Leggo il nome file numero 95
+SimpleFS_readDir() -> nome file = 96 da mettere nella posizione 95
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 6 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 97
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 98
+SimpleFS_readDir() -> Leggo il nome file numero 96
+SimpleFS_readDir() -> nome file = 97 da mettere nella posizione 96
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 7 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 98
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 99
+SimpleFS_readDir() -> Leggo il nome file numero 97
+SimpleFS_readDir() -> nome file = 98 da mettere nella posizione 97
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 8 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 99
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 100
+SimpleFS_readDir() -> Leggo il nome file numero 98
+SimpleFS_readDir() -> nome file = 99 da mettere nella posizione 98
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+SimpleFS_readDir() -> Nel DirectoryBlock in posizione 9 c'è un inode valido
+SimpleFS_readDir() -> Nel DirectoryBlock letto l'inode 100
+SimpleFS_readDir() -> Nel DirectoryBlock letto il primo blocco 101
+SimpleFS_readDir() -> Leggo il nome file numero 99
+SimpleFS_readDir() -> nome file = 100 da mettere nella posizione 99
+SimpleFS_readDir() -> Nel DirectoryBlock letto il nome di una cartella
+BitMap_set() -> setto posizione 101 a 1
 DiskDriver_writeInode() -> occupato un inode
-BitMap_set() -> setto posizione 2 a 1
+SimpleFS_mkdir() -> scritto su inode: 101
+BitMap_set() -> setto posizione 102 a 1
 DiskDriver_writeBlock() -> occupato un blocco data
+SimpleFS_mkdir() -> scritto su blocco: 102
+BitMap_set() -> setto posizione 92 a 1
 BitMap_set() -> setto posizione 0 a 1
-BitMap_set() -> setto posizione 0 a 1
-SimpleFS_createFile() -> Ora ci sono 2 files
-SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
-SimpleFS_createFile() -> Numero nomi file: 1
-SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
+SimpleFS_mkDir() -> Ora ci sono 101 files
 SimpleFS_changeDir() -> Trovata la directory dir1
-SimpleFS_readDir() -> numero files nella cartella = 0
 SimpleFS_createFile() -> allocato array con dimensione 0
 SimpleFS_readDir() -> numero files nella cartella = 0
-BitMap_set() -> setto posizione 3 a 1
+SimpleFS_createFile() -> blocchi data liberi: 174
+Primo blocco data trovato libero: 103
+BitMap_set() -> setto posizione 102 a 1
 DiskDriver_writeInode() -> occupato un inode
-SimpleFS_mkdir() -> scritto su inode: 3
-BitMap_set() -> setto posizione 3 a 1
+BitMap_set() -> setto posizione 103 a 1
 DiskDriver_writeBlock() -> occupato un blocco data
-SimpleFS_mkdir() -> scritto su blocco: 3
-BitMap_set() -> setto posizione 1 a 1
-BitMap_set() -> setto posizione 1 a 1
-SimpleFS_mkDir() -> Ora ci sono 1 files
+BitMap_set() -> setto posizione 102 a 1
+BitMap_set() -> setto posizione 102 a 1
+SimpleFS_createFile() -> Ora ci sono 1 files
+SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
+SimpleFS_createFile() -> Numero nomi file: 0
+SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
 SimpleFS_createFile() -> allocato array con dimensione 1
 SimpleFS_readDir() -> numero files nella cartella = 1
 SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcce10
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55bba3712740
 SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 3
+SimpleFS_readDir -> primo blocco dell'inode: 103
 SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> dirindir in posizione 0
-SimpleFS_createFile() -> blocchi data liberi: 273
-Primo blocco data trovato libero: 4
-BitMap_set() -> setto posizione 4 a 1
+SimpleFS_readDir() -> file1 in posizione 0
+SimpleFS_createFile() -> blocchi data liberi: 173
+Primo blocco data trovato libero: 104
+BitMap_set() -> setto posizione 103 a 1
 DiskDriver_writeInode() -> occupato un inode
-BitMap_set() -> setto posizione 4 a 1
+BitMap_set() -> setto posizione 104 a 1
 DiskDriver_writeBlock() -> occupato un blocco data
-BitMap_set() -> setto posizione 1 a 1
-BitMap_set() -> setto posizione 1 a 1
+BitMap_set() -> setto posizione 102 a 1
+BitMap_set() -> setto posizione 102 a 1
 SimpleFS_createFile() -> Ora ci sono 2 files
 SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
 SimpleFS_createFile() -> Numero nomi file: 1
 SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
-SimpleFS_readDir() -> numero files nella cartella = 2
-SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 3
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> dirindir in posizione 0
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 4
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> fileindir in posizione 1
-SimpleFS_readDir() -> numero files nella cartella = 2
-SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 3
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> dirindir in posizione 0
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 4
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> fileindir in posizione 1
 SimpleFS_changeDir() -> Modifico la directory handle
-SimpleFS_readDir() -> numero files nella cartella = 2
-SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 1
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> dir1 in posizione 0
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 2
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> file2 in posizione 1
-SimpleFS_remove() -> FDB: file_inodes[0] è una cartella
-SimpleFS_remove() -> File che sto analizzando il nome: dir1
-SimpleFS_remove -> trovata la directory dir1 
-rec_remove() -> inode letto: 3
-rec_remove -> siamo entrati nella directory dirindir 
-rec_remove() -> Libero il blocco data 0
-BitMap_set() -> setto posizione 3 a 0
+SimpleFS_remove -> Necessaria scansione dei db successivi (num_entries>limit) 
+SimpleFS_remove() -> Leggo il DB a 92
+rec_remove() -> inode letto: 102
+BitMap_set() -> setto posizione 103 a 0
 DiskDriver_freeBlock() -> liberato un blocco data
-rec_remove() -> Libero inode 3
-DiskDriver_freeInode() -> vecchioValore = 3 blocco cercato = 3
-BitMap_set() -> setto posizione 3 a 0
+rec_remove -> rimosso file file1 
+DiskDriver_freeInode() -> si richiede di liberare 102
+DiskDriver_freeInode() -> vecchioValore = 102 blocco cercato = 102
+BitMap_set() -> setto posizione 102 a 0
 DiskDriver_freeInode() -> liberato un inode
-rec_remove() -> inode letto: 4
-BitMap_set() -> setto posizione 4 a 0
+rec_remove() -> inode letto: 103
+BitMap_set() -> setto posizione 104 a 0
 DiskDriver_freeBlock() -> liberato un blocco data
-rec_remove -> rimosso file fileindir 
-DiskDriver_freeInode() -> vecchioValore = 4 blocco cercato = 4
-BitMap_set() -> setto posizione 4 a 0
+rec_remove -> rimosso file file2 
+DiskDriver_freeInode() -> si richiede di liberare 103
+DiskDriver_freeInode() -> vecchioValore = 103 blocco cercato = 103
+BitMap_set() -> setto posizione 103 a 0
 DiskDriver_freeInode() -> liberato un inode
-SimpleFS_remove() -> Libero l'inode 1
-DiskDriver_freeInode() -> vecchioValore = 1 blocco cercato = 1
-BitMap_set() -> setto posizione 1 a 0
+SimpleFS_remove() -> DB: cartella 'dir1'- Libero l'inode 101
+DiskDriver_freeInode() -> si richiede di liberare 101
+DiskDriver_freeInode() -> vecchioValore = 101 blocco cercato = 101
+BitMap_set() -> setto posizione 101 a 0
 DiskDriver_freeInode() -> liberato un inode
-SimpleFS_remove() -> Libero il blocco data 1
-BitMap_set() -> setto posizione 1 a 0
+SimpleFS_remove() -> DB: cartella 'dir1' - Ho liberato l'inode 101
+SimpleFS_remove() -> DB: cartella 'dir1'- Libero il blocco data 102
+BitMap_set() -> setto posizione 102 a 0
 DiskDriver_freeBlock() -> liberato un blocco data
+BitMap_set() -> setto posizione 92 a 1
+BitMap_set() -> setto posizione 0 a 1
 SimpleFS_remove -> eliminazione completata 
-SimpleFS_readDir() -> numero files nella cartella = 1
-SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 2
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> file2 in posizione 0
-SimpleFS_createFile() -> allocato array con dimensione 1
-SimpleFS_readDir() -> numero files nella cartella = 1
-SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 2
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> file2 in posizione 0
-SimpleFS_createFile() -> blocchi data liberi: 275
-Primo blocco data trovato libero: 1
-BitMap_set() -> setto posizione 1 a 1
-DiskDriver_writeInode() -> occupato un inode
-BitMap_set() -> setto posizione 1 a 1
-DiskDriver_writeBlock() -> occupato un blocco data
-BitMap_set() -> setto posizione 0 a 1
-BitMap_set() -> setto posizione 0 a 1
-SimpleFS_createFile() -> Ora ci sono 2 files
-SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
-SimpleFS_createFile() -> Numero nomi file: 1
-SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
-SimpleFS_readDir() -> numero files nella cartella = 2
-SimpleFS_readDir() -> sono nel FirstDirectoryBlock
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcec00
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 1
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> test in posizione 0
-SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcec00
-SimpleFS_readDir -> letto dal disco l'inode
-SimpleFS_readDir -> primo blocco dell'inode: 2
-SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
-SimpleFS_readDir() -> file2 in posizione 1
