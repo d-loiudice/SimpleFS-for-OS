@@ -78,6 +78,7 @@ int main(int na, char **va)
 				if ( disk != NULL )
 				{
 					SimpleFS_format(fileSystem);
+					disk=NULL;
 				}
 				else
 				{
@@ -287,7 +288,7 @@ int main(int na, char **va)
 					buffer = (char*) malloc((numeroBytes+1)*sizeof(char));
 					printf("Type what do you want to write: ");
 					fgets(buffer, numeroBytes+1, stdin);
-					scritti = SimpleFS_write(fileAperto, buffer, numeroBytes)
+					scritti = SimpleFS_write(fileAperto, buffer, numeroBytes);
 					if ( scritti != -1 )
 					{
 						printf("Wrote successfully %d on file %s\n", numeroBytes, fileAperto->ffb->fcb.name);
@@ -313,10 +314,12 @@ int main(int na, char **va)
 						printf("Chose how many bytes to read: ");
 						scanf("%d", &num_bytes);
 						getchar();
+						printf("Reading %d bytes\n",num_bytes);
 					} while ( num_bytes ==0 );
 					
 					char * toRead= malloc(sizeof(char) * num_bytes);
-					int readed=SimpleFS_read(fileAperto,toRead,num_bytes);
+					int toReadProva[4];
+					int readed=SimpleFS_read(fileAperto,toReadProva,num_bytes);
 					if( readed != -1){
 						printf("Read %d from %s: \n %s \n",readed,fileAperto->ffb->fcb.name,toRead);
 					}

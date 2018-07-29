@@ -183,7 +183,6 @@ int DiskDriver_readBlock(DiskDriver* disk, void* dest, int block_num) {
 	}
 	
 	memcpy(dest, blockRead, BLOCK_SIZE);
-	//TODEL cannot free block read why?
 	DiskDriver_flush(disk);
 	return 0;
 }
