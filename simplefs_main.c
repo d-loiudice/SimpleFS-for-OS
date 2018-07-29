@@ -214,7 +214,20 @@ int main(int na, char **va)
 			case 8:
 				if ( fileAperto == NULL )
 				{
+					do
+					{
+						printf("Select the name of the file to open: ");
+						scanf("%180s", comandoStringa);
+						getchar();
+					} while ( strlen(comandoStringa) < 1 );
 					
+					fileAperto= SimpleFS_openFile(directoryAttuale,comandoStringa);
+					if(fileAperto!=NULL){
+						printf("File %s opened successfully \n",fileAperto->ffb->fcb.name);
+						}
+					else{
+						printf("File not opened \n");
+						}
 				}
 				else
 				{
@@ -226,6 +239,40 @@ int main(int na, char **va)
 			case 9:
 				if ( fileAperto != NULL )
 				{
+					unsigned int len_max=128;
+					char* toWrite=malloc(sizeof(char)*len_max);
+					unsigned int current_size = len_max;
+					do
+					{
+						printf("Type what to write on file (Enter to end): \n");
+						if(toWrite != NULL)
+							{
+							int c = EOF;
+							unsigned int i =0;
+								//accept user input until hit enter or end of file
+							while (( c = getchar() ) != '\n' && c != EOF)
+							{
+								toWrite[i++]=(char)c;
+
+								//if i reached maximize size then realloc size
+								if(i == current_size)
+								{
+									current_size = i+len_max;
+									toWrite = realloc(toWrite, current_size);
+								}
+							}
+
+							toWrite[i] = '\0';
+						}
+					} while ( strlen(toWrite) < 1 );
+					
+					if(SimpleFS_write(fileAperto,toWrite,current_size) != -1)
+						printf("Wrote succesfully %d on file %s \n",current_size,fileAperto->ffb->fcb.name);
+					else
+						printf("Err in writing on  %s \n",fileAperto->ffb->fcb.name);
+					
+					free(toWrite);
+					toWrite = NULL;
 				}
 				else
 				{
@@ -237,6 +284,23 @@ int main(int na, char **va)
 			case 10:
 				if ( fileAperto != NULL )
 				{
+					int num_bytes;
+					do
+					{
+						printf("Chose how many bytes to read: ");
+						scanf("%d", &num_bytes);
+						getchar();
+					} while ( num_bytes !=0 );
+					char * toRead= malloc(sizeof(char) * num_bytes);
+					int readed=SimpleFS_read(fileAperto,toRead,num_bytes);
+					if( readed != -1){
+						printf("Read %d from %s: \n %s \n",readed,fileAperto->ffb->fcb.name,toRead);
+						}
+					else{
+						printf("Err in read %s \n",fileAperto->ffb->fcb.name);
+						}
+					
+					free(toRead);
 				}
 				else
 				{
@@ -248,6 +312,19 @@ int main(int na, char **va)
 			case 11:
 				if ( fileAperto != NULL )
 				{
+					int pos,bytes_moved;
+					do
+					{
+						printf("Chose position in the file: ");
+						scanf("%d", &pos);
+						getchar();
+					} while ( pos!=0 );
+					
+					bytes_moved= SimpleFS_seek(fileAperto,pos);
+					if(bytes_moved!=-1)
+						printf("Moved %d bytes in %s \n",bytes_moved,fileAperto->ffb->fcb.name );
+					else
+						printf("Could not seek in %s \n",fileAperto->ffb->fcb.name);
 				}
 				else
 				{
@@ -259,7 +336,13 @@ int main(int na, char **va)
 			case 12:
 				if ( fileAperto != NULL )
 				{
-					fileAperto = NULL;
+					//fileAperto = NULL;
+					if( SimpleFS_close(fileAperto) != -1){
+						printf("Closed file \n"); 
+						}
+					else{
+						printf("Could not close file \n"); 
+						}
 				}
 				else
 				{
