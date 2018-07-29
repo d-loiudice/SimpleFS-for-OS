@@ -36,6 +36,7 @@ int main(int na, char **va)
 		if ( fileAperto != NULL ) printf("10: Read something at the position \n");
 		if ( fileAperto != NULL ) printf("11: Seek in file\n");
 		if ( fileAperto != NULL ) printf("12: Close opened file\n");
+		if ( disk != NULL) printf("30: List files in the current directory\n");
 		printf("99: Quit\n");
 		printf("\nEnter a value: ");
 		scanf("%d", &comando);
@@ -244,41 +245,6 @@ int main(int na, char **va)
 			case 9:
 				if ( fileAperto != NULL )
 				{
-					/*unsigned int len_max=128;
-					char* toWrite=malloc(sizeof(char)*(len_max));
-					unsigned int current_size = len_max;
-					do
-					{
-						printf("Type what to write on file (Enter to end): \n");
-						getchar();
-						if(toWrite != NULL)
-						{
-							int c = EOF;
-							unsigned int i =0;
-								//accept user input until hit enter or end of file
-							while (( c = getchar() ) != '\n' && c != EOF)
-							{
-								toWrite[i++]=(char)c;
-
-								//if i reached maximize size then realloc size
-								if(i == current_size)
-								{
-									current_size = i+len_max;
-									toWrite = realloc(toWrite, current_size);
-								}
-							}
-
-							//toWrite[i] = '\0';
-						}
-					} while ( strlen(toWrite) < 1 );
-					
-					if(SimpleFS_write(fileAperto,toWrite,current_size) != -1)
-						printf("Wrote succesfully %d on file %s \n",current_size,fileAperto->ffb->fcb.name);
-					else
-						printf("Err in writing on  %s \n",fileAperto->ffb->fcb.name);
-					
-					free(toWrite);
-					toWrite = NULL;*/
 					do
 					{
 						printf("How many bytes do you want to write at the current position? ");
@@ -291,7 +257,7 @@ int main(int na, char **va)
 					scritti = SimpleFS_write(fileAperto, buffer, numeroBytes);
 					if ( scritti != -1 )
 					{
-						printf("Wrote successfully %d on file %s\n", numeroBytes, fileAperto->ffb->fcb.name);
+						printf("Wrote successfully %d on file %s\n", scritti, fileAperto->ffb->fcb.name);
 					}
 					else
 					{
@@ -376,6 +342,11 @@ int main(int na, char **va)
 				{
 					printf("File not opened\n");
 				}
+				break;
+			
+			// lista colorata
+			case 30:
+				SimpleFS_listFiles(fileSystem);
 				break;
 			
 			// Dati disco
