@@ -32,7 +32,8 @@ int main(int na, char **va)
 		if ( disk != NULL) printf("8: Open an existent file\n");
 		if ( fileAperto != NULL ) printf("9: Write something at the position \n");
 		if ( fileAperto != NULL ) printf("10: Read something at the position \n");
-		if ( fileAperto != NULL ) printf("111: Seek in file\n");
+		if ( fileAperto != NULL ) printf("11: Seek in file\n");
+		if ( fileAperto != NULL ) printf("12: Close opened file\n");
 		printf("99: Quit\n");
 		printf("\nEnter a value: ");
 		scanf("%d", &comando);
@@ -214,7 +215,21 @@ int main(int na, char **va)
 			case 8:
 				if ( fileAperto == NULL )
 				{
-					
+					do
+					{
+						printf("Select the name of the file to open: ");
+						scanf("%180s", comandoStringa);
+						getchar();
+					} while ( strlen(comandoStringa) < 1 );
+					fileAperto = SimpleFS_openFile(directoryAttuale, comandoStringa);
+					if ( fileAperto != NULL )
+					{
+						printf("File %s opened successfully\n", comandoStringa);
+					}
+					else
+					{
+						printf("Can't open file %s\n", comandoStringa);
+					}
 				}
 				else
 				{

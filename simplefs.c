@@ -576,8 +576,9 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 	}
 	if(!found) return NULL;
 	
-	DiskDriver_init(f->sfs->disk,filename,inode->dimensioneInBlocchi);
-	
+	//DiskDriver_init(f->sfs->disk,filename,inode->dimensioneInBlocchi);
+	f = (FileHandle*) malloc(sizeof(FileHandle));
+	f->sfs = d->sfs;
 	f->inode=in_index;
 	f->ffb=ffb;
 	f->current_block=&(ffb->header);
@@ -928,7 +929,7 @@ int SimpleFS_seek(FileHandle* f, int pos){
 		return -1;
 	}
 	
-	free(ffbr);
+	//free(ffbr);
 	free(fbr);
 	free(inode);
 	
