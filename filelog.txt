@@ -1,0 +1,182 @@
+FD: 3
+DiskDriver_init() -> dataFree_blocks = 277
+DiskDriver_init() -> inodeFree_blocks = 160
+BlockSize: 512
+FD: 3
+FD in diskdriver: 3
+SimpleFS_format() -> dopo aver inizializzato inode : valore inodemap_blocks = 160
+BitMap_set() -> setto posizione 0 a 1
+DiskDriver_writeInode() -> occupato un inode
+SimpleFS_format() -> dopo aver inizializzato i file_inodes dentro firstdirectoryblock : valore inodemap_blocks = 160
+BitMap_set() -> setto posizione 0 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+SimpleFS_format() -> valore inodemap_blocks = 160
+Ho letto il primo inode
+SimpleFS_readDir() -> numero files nella cartella = 0
+SimpleFS_createFile() -> allocato array con dimensione 0
+SimpleFS_readDir() -> numero files nella cartella = 0
+BitMap_set() -> setto posizione 1 a 1
+DiskDriver_writeInode() -> occupato un inode
+SimpleFS_mkdir() -> scritto su inode: 1
+BitMap_set() -> setto posizione 1 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+SimpleFS_mkdir() -> scritto su blocco: 1
+BitMap_set() -> setto posizione 0 a 1
+BitMap_set() -> setto posizione 0 a 1
+SimpleFS_mkDir() -> Ora ci sono 1 files
+SimpleFS_createFile() -> allocato array con dimensione 1
+SimpleFS_readDir() -> numero files nella cartella = 1
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcc380
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dir1 in posizione 0
+SimpleFS_createFile() -> blocchi data liberi: 275
+Primo blocco data trovato libero: 2
+BitMap_set() -> setto posizione 2 a 1
+DiskDriver_writeInode() -> occupato un inode
+BitMap_set() -> setto posizione 2 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+BitMap_set() -> setto posizione 0 a 1
+BitMap_set() -> setto posizione 0 a 1
+SimpleFS_createFile() -> Ora ci sono 2 files
+SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
+SimpleFS_createFile() -> Numero nomi file: 1
+SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
+SimpleFS_changeDir() -> Trovata la directory dir1
+SimpleFS_readDir() -> numero files nella cartella = 0
+SimpleFS_createFile() -> allocato array con dimensione 0
+SimpleFS_readDir() -> numero files nella cartella = 0
+BitMap_set() -> setto posizione 3 a 1
+DiskDriver_writeInode() -> occupato un inode
+SimpleFS_mkdir() -> scritto su inode: 3
+BitMap_set() -> setto posizione 3 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+SimpleFS_mkdir() -> scritto su blocco: 3
+BitMap_set() -> setto posizione 1 a 1
+BitMap_set() -> setto posizione 1 a 1
+SimpleFS_mkDir() -> Ora ci sono 1 files
+SimpleFS_createFile() -> allocato array con dimensione 1
+SimpleFS_readDir() -> numero files nella cartella = 1
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcce10
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 3
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dirindir in posizione 0
+SimpleFS_createFile() -> blocchi data liberi: 273
+Primo blocco data trovato libero: 4
+BitMap_set() -> setto posizione 4 a 1
+DiskDriver_writeInode() -> occupato un inode
+BitMap_set() -> setto posizione 4 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+BitMap_set() -> setto posizione 1 a 1
+BitMap_set() -> setto posizione 1 a 1
+SimpleFS_createFile() -> Ora ci sono 2 files
+SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
+SimpleFS_createFile() -> Numero nomi file: 1
+SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 3
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dirindir in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 4
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> fileindir in posizione 1
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 3
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dirindir in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 4
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> fileindir in posizione 1
+SimpleFS_changeDir() -> Modifico la directory handle
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> dir1 in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file2 in posizione 1
+SimpleFS_remove() -> FDB: file_inodes[0] è una cartella
+SimpleFS_remove() -> File che sto analizzando il nome: dir1
+SimpleFS_remove -> trovata la directory dir1 
+rec_remove() -> inode letto: 3
+rec_remove -> siamo entrati nella directory dirindir 
+rec_remove() -> Libero il blocco data 0
+BitMap_set() -> setto posizione 3 a 0
+DiskDriver_freeBlock() -> liberato un blocco data
+rec_remove() -> Libero inode 3
+DiskDriver_freeInode() -> vecchioValore = 3 blocco cercato = 3
+BitMap_set() -> setto posizione 3 a 0
+DiskDriver_freeInode() -> liberato un inode
+rec_remove() -> inode letto: 4
+BitMap_set() -> setto posizione 4 a 0
+DiskDriver_freeBlock() -> liberato un blocco data
+rec_remove -> rimosso file fileindir 
+DiskDriver_freeInode() -> vecchioValore = 4 blocco cercato = 4
+BitMap_set() -> setto posizione 4 a 0
+DiskDriver_freeInode() -> liberato un inode
+SimpleFS_remove() -> Libero l'inode 1
+DiskDriver_freeInode() -> vecchioValore = 1 blocco cercato = 1
+BitMap_set() -> setto posizione 1 a 0
+DiskDriver_freeInode() -> liberato un inode
+SimpleFS_remove() -> Libero il blocco data 1
+BitMap_set() -> setto posizione 1 a 0
+DiskDriver_freeBlock() -> liberato un blocco data
+SimpleFS_remove -> eliminazione completata 
+SimpleFS_readDir() -> numero files nella cartella = 1
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file2 in posizione 0
+SimpleFS_createFile() -> allocato array con dimensione 1
+SimpleFS_readDir() -> numero files nella cartella = 1
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcd3e0
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file2 in posizione 0
+SimpleFS_createFile() -> blocchi data liberi: 275
+Primo blocco data trovato libero: 1
+BitMap_set() -> setto posizione 1 a 1
+DiskDriver_writeInode() -> occupato un inode
+BitMap_set() -> setto posizione 1 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+BitMap_set() -> setto posizione 0 a 1
+BitMap_set() -> setto posizione 0 a 1
+SimpleFS_createFile() -> Ora ci sono 2 files
+SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
+SimpleFS_createFile() -> Numero nomi file: 1
+SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
+SimpleFS_readDir() -> numero files nella cartella = 2
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcec00
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> test in posizione 0
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x563319bcec00
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 2
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file2 in posizione 1

@@ -248,7 +248,7 @@ int main(int na, char **va)
 					{
 						printf("Type what to write on file (Enter to end): \n");
 						if(toWrite != NULL)
-							{
+						{
 							int c = EOF;
 							unsigned int i =0;
 								//accept user input until hit enter or end of file
@@ -292,15 +292,16 @@ int main(int na, char **va)
 						printf("Chose how many bytes to read: ");
 						scanf("%d", &num_bytes);
 						getchar();
-					} while ( num_bytes !=0 );
+					} while ( num_bytes ==0 );
+					
 					char * toRead= malloc(sizeof(char) * num_bytes);
 					int readed=SimpleFS_read(fileAperto,toRead,num_bytes);
 					if( readed != -1){
 						printf("Read %d from %s: \n %s \n",readed,fileAperto->ffb->fcb.name,toRead);
-						}
+					}
 					else{
 						printf("Err in read %s \n",fileAperto->ffb->fcb.name);
-						}
+					}
 					
 					free(toRead);
 				}
@@ -320,7 +321,7 @@ int main(int na, char **va)
 						printf("Chose position in the file: ");
 						scanf("%d", &pos);
 						getchar();
-					} while ( pos!=0 );
+					} while ( pos < 0 );
 					
 					bytes_moved= SimpleFS_seek(fileAperto,pos);
 					if(bytes_moved!=-1)
