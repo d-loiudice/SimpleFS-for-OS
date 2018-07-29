@@ -79,6 +79,7 @@ int main(int na, char **va)
 				if ( disk != NULL )
 				{
 					SimpleFS_format(fileSystem);
+					disk=NULL;
 				}
 				else
 				{
@@ -280,10 +281,12 @@ int main(int na, char **va)
 						printf("Chose how many bytes to read: ");
 						scanf("%d", &num_bytes);
 						getchar();
+						printf("Reading %d bytes\n",num_bytes);
 					} while ( num_bytes ==0 );
 					
 					char * toRead= malloc(sizeof(char) * num_bytes);
-					int readed=SimpleFS_read(fileAperto,toRead,num_bytes);
+					int toReadProva[4];
+					int readed=SimpleFS_read(fileAperto,toReadProva,num_bytes);
 					if( readed != -1){
 						printf("Read %d from %s: \n %s \n",readed,fileAperto->ffb->fcb.name,toRead);
 					}
