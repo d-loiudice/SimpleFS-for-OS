@@ -18,6 +18,8 @@ int main(int na, char **va)
 	int dimensioneArray;
 	int trovato;
 	int numeroBytes;
+	int scritti;
+	char* buffer;
 	// Menu
 	// 99 per uscire dall'applicazione
 	while ( comando != 99 )
@@ -241,12 +243,13 @@ int main(int na, char **va)
 			case 9:
 				if ( fileAperto != NULL )
 				{
-					unsigned int len_max=128;
-					char* toWrite=malloc(sizeof(char)*len_max);
+					/*unsigned int len_max=128;
+					char* toWrite=malloc(sizeof(char)*(len_max));
 					unsigned int current_size = len_max;
 					do
 					{
 						printf("Type what to write on file (Enter to end): \n");
+						getchar();
 						if(toWrite != NULL)
 						{
 							int c = EOF;
@@ -264,7 +267,7 @@ int main(int na, char **va)
 								}
 							}
 
-							toWrite[i] = '\0';
+							//toWrite[i] = '\0';
 						}
 					} while ( strlen(toWrite) < 1 );
 					
@@ -274,7 +277,25 @@ int main(int na, char **va)
 						printf("Err in writing on  %s \n",fileAperto->ffb->fcb.name);
 					
 					free(toWrite);
-					toWrite = NULL;
+					toWrite = NULL;*/
+					do
+					{
+						printf("How many bytes do you want to write at the current position? ");
+						scanf("%d", &numeroBytes);
+						getchar();
+					} while(numeroBytes <= 0);
+					buffer = (char*) malloc((numeroBytes+1)*sizeof(char));
+					printf("Type what do you want to write: ");
+					fgets(buffer, numeroBytes+1, stdin);
+					scritti = SimpleFS_write(fileAperto, buffer, numeroBytes)
+					if ( scritti != -1 )
+					{
+						printf("Wrote successfully %d on file %s\n", numeroBytes, fileAperto->ffb->fcb.name);
+					}
+					else
+					{
+						printf("Error in writing on %s\n", fileAperto->ffb->fcb.name);
+					}
 				}
 				else
 				{
@@ -342,10 +363,11 @@ int main(int na, char **va)
 					//fileAperto = NULL;
 					if( SimpleFS_close(fileAperto) != -1){
 						printf("Closed file \n"); 
-						}
+						fileAperto = NULL;
+					}
 					else{
 						printf("Could not close file \n"); 
-						}
+					}
 				}
 				else
 				{

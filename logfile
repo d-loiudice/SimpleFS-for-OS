@@ -26,11 +26,21 @@ SimpleFS_createFile() -> Ora ci sono 1 files
 SimpleFS_createFile() -> Inizio deallocazione array stringhe nomi file
 SimpleFS_createFile() -> Numero nomi file: 0
 SimpleFS_createFile() -> Fine deallocazione array stringhe nomi file
-BitMap_set() -> setto posizione 0 a 1
+SimpleFS_readDir() -> numero files nella cartella = 1
+SimpleFS_readDir() -> sono nel FirstDirectoryBlock
+SimpleFS_readDir() -> inodeRead allocato a indirizzo 0x55b1677f1800
+SimpleFS_readDir -> letto dal disco l'inode
+SimpleFS_readDir -> primo blocco dell'inode: 1
+SimpleFS_readDir -> letto dal disco il primo blocco indicato dall'inode
+SimpleFS_readDir() -> file in posizione 0
+BitMap_set() -> setto posizione 1 a 1
+SimpleFS_write() -> è finito il blocco ma devo ancora scrivere
+Il nuovo blocco sarà in 2
+BitMap_set() -> setto posizione 2 a 1
+DiskDriver_writeBlock() -> occupato un blocco data
+BitMap_set() -> setto posizione 1 a 1
+BitMap_set() -> setto posizione 2 a 1
+SimpleFS_write() -> ho finito di scrivere il buffer good
 BitMap_set() -> setto posizione 1 a 1
 BitMap_set() -> setto posizione 1 a 1
-BitMap_set() -> setto posizione 1 a 1
-BitMap_set() -> setto posizione 1 a 1
-BitMap_set() -> setto posizione 1 a 1
-BitMap_set() -> setto posizione 0 a 1
 BitMap_set() -> setto posizione 1 a 1

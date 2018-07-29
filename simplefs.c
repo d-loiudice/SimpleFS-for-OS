@@ -632,7 +632,7 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 	
 	
 	//scrittura su blocco
-	
+	/*
 	int limit;	//quanto puo entrare nel blocco considerando l header 
 	unsigned char is_ffb;	//boolean per sapere se siamo nel primo blocco
 	if(f->current_block->block_in_file==0){ //abbiamo un fcb e siamo quindi in ffb
@@ -716,24 +716,195 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 			data_block_num=fbr->header.block_in_file;
 			
 			i++;
+		}
+	}*/
+	
+	int num_block;
+	int numeroBloccoAttuale;
+	int bytes_written = 0;
+	int posizione = f->pos_in_file;
+	int posizioneRelativa;
+	int payloadFFB = BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock);
+	int payloadFB = BLOCK_SIZE-sizeof(BlockHeader);
+	int indiceBuffer;
+	FileBlock* nuovoFileBlock = NULL;
+	// In quale blocco sono
+	if(posizione < payloadFFB){
+		num_block=0;	// è nel ffb
+	}
+	else if (posizione == payloadFFB){
+		num_block=1;	//è nel secondo blocco
+	}
+	else{
+		num_block= (int)ceil( (double)(posizione - payloadFFB)/payloadFB );	//è in uno dei successivi blocchi
+	}
+	
+	// Partendo dal FFB devo raggiungere il num_block blocco
+	void* dataBloccoAttuale = f->ffb;
+	int indiceBloccoAttuale = f->ffb->fcb.block_in_disk;
+	int indiceBloccoSuccessivo;
+	int dimensionePayloadBlocco;
+	numeroBloccoAttuale = 0;
+	// Se devo raggiungere il FFB già ce l'ho
+	while ( numeroBloccoAttuale != num_block )
+	{
+		indiceBloccoSuccessivo = (numeroBloccoAttuale == 0 ? ((FirstFileBlock*)dataBloccoAttuale)->header.next_block : ((FileBlock*)dataBloccoAttuale)->header.next_block );
+		// Se ho memorizzato il FFB non lo devo liberare
+		if ( numeroBloccoAttuale > 0 ) free(dataBloccoAttuale);
+		dataBloccoAttuale = malloc(sizeof(FileBlock));
+		if ( DiskDriver_readBlock(f->sfs->disk, dataBloccoAttuale, indiceBloccoSuccessivo) != -1 )
+		{
+			indiceBloccoAttuale = indiceBloccoSuccessivo;
+			numeroBloccoAttuale = numeroBloccoAttuale + 1;
+		}
+		else
+		{
+			fprintf(stderr, "SimpleFS_write() -> Errore durante la lettura del blocco data successivo %d\n", indiceBloccoSuccessivo);
+		}
+	}
+	
+	indiceBuffer = 0;
+	// Continuo a scrivere finché non ho scritto tutto il buffer oppure è capitato è un errore (ret != 0)
+	while ( bytes_written != size && ret == 0 )
+	{
+		// Calcolo la posizione relativa nel blocco attuale da cui iniziare a scrivere
+		if ( numeroBloccoAttuale == 0)
+		{
+			posizioneRelativa = posizione;
+		}
+		else
+		{
+			posizioneRelativa = posizione - payloadFFB - ((numeroBloccoAttuale-1)*payloadFB);
+		}
+		
+		// Scrittura fino alla fine del buffer oppure fino alla fine del blocco attuale
+		//indiceBuffer = 0;
+		dimensionePayloadBlocco = (numeroBloccoAttuale == 0 ? payloadFFB : payloadFB);
+		while ( indiceBuffer < size && posizioneRelativa < dimensionePayloadBlocco )
+		{
+			if ( numeroBloccoAttuale == 0 )
+			{
+				(((FirstFileBlock*)dataBloccoAttuale)->data)[posizioneRelativa] = ((char*)data)[indiceBuffer];
+			}
+			else
+			{
+				(((FileBlock*)dataBloccoAttuale)->data)[posizioneRelativa] = ((char*)data)[indiceBuffer];
+			}
+			//fprintf(stderr, "SimpleFS_write() -> devo scrivere %c da posizione %d\n", ((char*)data)[indiceBuffer], indiceBuffer);
+			//fprintf(stderr, "SimpleFS_write() -> se è ffb scritto %c in posizione %d\n", (((FirstFileBlock*)dataBloccoAttuale)->data)[posizioneRelativa], posizioneRelativa);
+			//fprintf(stderr, "SimpleFS_write() -> se è fb scritto %c in posizione %d\n", (((FileBlock*)dataBloccoAttuale)->data)[posizioneRelativa], posizioneRelativa);
+			
+			posizioneRelativa = posizioneRelativa + 1;
+			indiceBuffer = indiceBuffer + 1;
+			posizione = posizione + 1;
+			bytes_written = bytes_written + 1;
+		}
+		
+		// Salvo le modifiche effettuate
+		if ( DiskDriver_writeBlock(f->sfs->disk, dataBloccoAttuale, indiceBloccoAttuale) != -1 )
+		{
+			// OK
+		}
+		else
+		{
+			fprintf(stderr, "SimpleFS_write() -> errore durante la scrittura del blocco data %d\n", indiceBloccoAttuale);
+		}
+		
+		// Verifica perché è uscito dall'iterazione
+		if ( indiceBuffer < size && posizioneRelativa >= dimensionePayloadBlocco )
+		{
+			fprintf(stderr, "SimpleFS_write() -> è finito il blocco ma devo ancora scrivere\n");
+			// Verifica se esiste un blocco successivo
+			indiceBloccoSuccessivo = (numeroBloccoAttuale == 0) ? ((FirstFileBlock*)dataBloccoAttuale)->header.next_block : ((FileBlock*)dataBloccoAttuale)->header.next_block;
+			if ( indiceBloccoSuccessivo != -1 )
+			{
+				// Esiste e lo leggo 
+				indiceBloccoAttuale = indiceBloccoSuccessivo;
+				if ( DiskDriver_readBlock(f->sfs->disk, dataBloccoAttuale, indiceBloccoAttuale) != -1 )
+				{
+					// OK
+					numeroBloccoAttuale = numeroBloccoAttuale + 1;
+				}
+				else
+				{
+					fprintf(stderr, "SimpleFS_write() -> errore durante la lettura del già esistente blocco successivo %d\n", indiceBloccoAttuale);
+					ret = -1;
+				}
+			}
+			else
+			{
+				// Non esiste devo crearlo e allegarlo
+				indiceBloccoSuccessivo = DiskDriver_getFreeBlock(f->sfs->disk, 0);
+				fprintf(stderr, "Il nuovo blocco sarà in %d\n", indiceBloccoSuccessivo);
+				nuovoFileBlock = (FileBlock*) malloc(sizeof(FileBlock));
+				nuovoFileBlock->header.block_in_file = numeroBloccoAttuale + 1;
+				nuovoFileBlock->header.previous_block = indiceBloccoAttuale;
+				nuovoFileBlock->header.next_block = -1;
+				if ( numeroBloccoAttuale == 0 )
+				{
+					((FirstFileBlock*)dataBloccoAttuale)->header.next_block = indiceBloccoSuccessivo;
+				}
+				else
+				{
+					((FileBlock*)dataBloccoAttuale)->header.next_block = indiceBloccoSuccessivo;
+				}
+				// Scrittura del nuovo blocco e sucessivamente riscrittura del blocco attuale per le modifiche
+				if ( DiskDriver_writeBlock(f->sfs->disk, nuovoFileBlock, indiceBloccoSuccessivo) != -1 )
+				{
+					if ( DiskDriver_writeBlock(f->sfs->disk, dataBloccoAttuale, indiceBloccoAttuale) != -1 )
+					{
+						// OK 
+						indiceBloccoAttuale = indiceBloccoSuccessivo;
+						if ( numeroBloccoAttuale != 0 )
+						{
+							// Liberare se non è FDB
+							free(dataBloccoAttuale);
+						}
+						numeroBloccoAttuale = nuovoFileBlock->header.block_in_file;
+						dataBloccoAttuale = nuovoFileBlock;
+						posizioneRelativa = 0;
+					}
+					else
+					{
+						fprintf(stderr, "SimpleFS_write() -> Errore durante la modifica del blocco attuale %d per inserire il nuovo blocco\n", indiceBloccoAttuale);
+						ret = -1;
+					}
+				}
+				else
+				{
+					fprintf(stderr, "SimpleFS_write() -> Errore durante la creazione di un nuovo blocco %d\n", indiceBloccoSuccessivo);
+					ret = -1;
+				}
 			}
 		}
-	
-		//aggiornamento inode
 		
-		in_read->dataUltimaModifica=time(NULL);
-		ret= DiskDriver_writeInode(f->sfs->disk,in_read,f->inode);
-		if(ret < 0){
-			perror("erorre write inode in write simplefs");
-			return -1;
-			}
-			
-		free(in_read);
-		free(ffbw);
-		free(fbw); 
-		
-		return bytes_written;
+		if ( indiceBuffer >= size )
+		{
+			fprintf(stderr, "SimpleFS_write() -> ho finito di scrivere il buffer good\n");
+		}
 	}
+	//aggiornamento inode
+	f->pos_in_file = posizione;
+	in_read->dataUltimaModifica=time(NULL);
+	if (posizione > in_read->dimensioneFile)
+	{
+		in_read->dimensioneFile = posizione;
+	}
+	ret= DiskDriver_writeInode(f->sfs->disk,in_read,f->inode);
+	if(ret < 0){
+		perror("erorre write inode in write simplefs");
+		return -1;
+	}
+		
+	free(in_read);
+	//free(ffbw);
+	//free(fbw); 
+	if ( nuovoFileBlock != NULL ) free(nuovoFileBlock);
+	
+	DiskDriver_flush(f->sfs->disk);
+	
+	return bytes_written;
+}
 
 
 
@@ -856,7 +1027,6 @@ int SimpleFS_read(FileHandle* f, void* data, int size){
 	free(ffb_to_r);
 	free(fb_to_r);
 	
-	
 	return bytes_read;
 	}
 
@@ -890,26 +1060,103 @@ int SimpleFS_seek(FileHandle* f, int pos){
 	if( pos > inode->dimensioneFile ){
 		perror("file too short");
 		return -1;
-		}
+	}
 		
-	FileBlock* fbr=malloc(sizeof(FileBlock));
+	//FileBlock* fbr=malloc(sizeof(FileBlock));
 	FirstFileBlock* ffbr=malloc(sizeof(FirstFileBlock));
 		
 	//In quale blocco è pos?
-	int num_block,payload1_bytes= BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock);	//payload in ffb
+	int num_block;
+	int payload1_bytes= BLOCK_SIZE-sizeof(BlockHeader)-sizeof(FileControlBlock);	//payload in ffb
 	int payload2_bytes= BLOCK_SIZE-sizeof(BlockHeader);
 	
 	if(pos < payload1_bytes){
-		num_block=1;	// è nel ffb
+		num_block=0;	// è nel ffb
 	}
 	else if (pos== payload1_bytes){
-		num_block=2;	//è nel secondo blocco
+		num_block=1;	//è nel secondo blocco
 	}
 	else{
-		num_block= ceil( (double)(pos - payload1_bytes)/payload2_bytes );	//è in uno dei successivi blocchi
+		num_block= (int)ceil( (double)(pos - payload1_bytes)/payload2_bytes );	//è in uno dei successivi blocchi
 	}
 	
-	if(num_block==1){
+	FileBlock* fileBlock = malloc(sizeof(FileBlock));
+	
+	// Se non devo andare al FFB
+	if ( num_block != 0 )
+	{
+		// Iterazione per raggiungere il blocco da leggere
+		while ( f->current_block->block_in_file != num_block && bytes_read != -1 )
+		{
+			if ( f->current_block->block_in_file < num_block )
+			{
+				// Devo andare avanti
+				if ( f->current_block->next_block != -1 )
+				{
+					if ( DiskDriver_readBlock(f->sfs->disk, fileBlock, f->current_block->previous_block) )
+					{
+						// Se non sono già nel ffb, devo liberare la memoria
+						if ( f->current_block != &(f->ffb->header) ) 
+						{
+							free(f->current_block);
+						}
+						f->current_block = malloc(sizeof(BlockHeader));
+						//memcpy(f->current_block, fileBlock->header, sizeof(BlockHeader));
+						f->current_block->block_in_file = fileBlock->header.block_in_file;
+						f->current_block->next_block = fileBlock->header.next_block;
+						f->current_block->previous_block = fileBlock->header.previous_block;
+					}
+					else
+					{
+						fprintf(stderr, "SimpleFS_seek() -> Errore durante la lettura del successivo blocco %d\n", f->current_block->next_block);
+					}
+				}
+				else
+				{
+					// Fuori file
+					bytes_read  = -1;
+				}
+				
+			}
+			else
+			{
+				// Devo andare indietro
+				if ( f->current_block->previous_block != -1 )
+				{
+					if ( DiskDriver_readBlock(f->sfs->disk, fileBlock, f->current_block->previous_block) )
+					{
+						free(f->current_block);
+						f->current_block = malloc(sizeof(BlockHeader));
+						//memcpy(f->current_block, fileBlock->header, sizeof(BlockHeader));
+						f->current_block->block_in_file = fileBlock->header.block_in_file;
+						f->current_block->next_block = fileBlock->header.next_block;
+						f->current_block->previous_block = fileBlock->header.previous_block;
+					}
+					else
+					{
+						fprintf(stderr, "SimpleFS_seek() -> Errore durante la lettura del precedente blocco %d\n", f->current_block->previous_block);
+					}
+				}
+				else
+				{
+					bytes_read = -1;
+				}
+			}
+		}
+	}
+	else
+	{
+		// Se non ci sono già al blocco 0 
+		if ( f->current_block != &(f->ffb->header) )
+		{
+			free(f->current_block);
+			f->current_block = &(f->ffb->header);
+		}
+	}
+	
+	 
+	
+	/*if(num_block==1){
 		ret=DiskDriver_readBlock(f->sfs->disk,ffbr,num_block);
 		if(ret <0) return -1;
 		f->current_block= &(ffbr->header);
@@ -918,23 +1165,32 @@ int SimpleFS_seek(FileHandle* f, int pos){
 		ret=DiskDriver_readBlock(f->sfs->disk,fbr,num_block);
 		if(ret <0) return -1;
 		f->current_block= &(fbr->header);
+	}*/
+	
+	if ( bytes_read != -1)
+	{
+		// Spostamento assoluto
+		bytes_read = f->pos_in_file - pos;
+		if ( bytes_read < 0 ) bytes_read = bytes_read*-1;
+		f->pos_in_file=pos;    
+		//bytes_read=pos;	//correct ?
+		
+		inode->dataUltimoAccesso=time(NULL);
+		if(DiskDriver_writeInode(f->sfs->disk,inode,f->inode) < 0){
+			perror("updating inode failed");
+			return -1;
+		}
 	}
-	
-	f->pos_in_file=pos;    
-	bytes_read=pos;	//correct ?
-	
-	inode->dataUltimoAccesso=time(NULL);
-	if(DiskDriver_writeInode(f->sfs->disk,inode,f->inode) < 0){
-		perror("updating inode failed");
-		return -1;
+	else
+	{
+		//fprintf(stderr, "SimpleFS_seek() -> Errore durante lo spostamento 
 	}
-	
 	//free(ffbr);
-	free(fbr);
+	free(fileBlock);
 	free(inode);
 	
 	return bytes_read;
-	}
+}
 
 // seeks for a directory in d. If dirname is equal to ".." it goes one level up
 // 0 on success, negative value on error
