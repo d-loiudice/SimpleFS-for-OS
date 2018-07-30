@@ -87,6 +87,8 @@ int main(int na, char **va)
 				{
 					SimpleFS_format(fileSystem);
 					disk=NULL;
+					fprintf(stderr,"Leaving due to format (to access the formatted disk re run the app)\n  Goodbye! \n"); 
+					exit(1);
 				}
 				else
 				{

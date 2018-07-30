@@ -160,8 +160,12 @@ void SimpleFS_format(SimpleFS* fs)
 		DiskDriver_flush(fs->disk);
 		free(inode);
 		free(bitmapInode);
+		
 	}
+
+
 }
+
 
 // creates an empty file in the directory d
 // returns null on error (file existing, no free blocks inodes and datas)
@@ -531,6 +535,10 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 			inode=malloc(sizeof(Inode));
 			ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
 			if(ret<0) return NULL;
+			if(inode->tipoFile!='r'){
+				fprintf(stderr,"%s -> Not valid file name (it's a directory)\n",__func__);
+				return NULL;
+				}
 			ffb=malloc(sizeof(FirstFileBlock));
 			ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
 			if(ret<0) return NULL;
@@ -560,6 +568,10 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 				inode=malloc(sizeof(Inode));
 				ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
 				if(ret<0) return NULL;
+				if(inode->tipoFile!='r'){
+				fprintf(stderr,"%s -> Not valid file name (it's a directory)\n",__func__);
+				return NULL;
+				}
 				ffb=malloc(sizeof(FirstFileBlock));
 				ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
 				if(ret<0) return NULL;
@@ -989,8 +1001,9 @@ int SimpleFS_read(FileHandle* f, void* data, int size){
 	//in_read->dataUltimaModifica=time(NULL);
 	if (posizione > in_read->dimensioneFile)
 	{
-		in_read->dimensioneFile = posizione;
+		//in_read->dimensioneFile = posizione;
 	}
+	in_read->dataUltimoAccesso=time(NULL);
 	ret= DiskDriver_writeInode(f->sfs->disk,in_read,f->inode);
 	if(ret < 0){
 		perror("erorre write inode in read simplefs");
@@ -1801,48 +1814,56 @@ int SimpleFS_listFiles(SimpleFS* fs){
 	//fdb caricato
 	
 	int i;
+	int j;
 	DirectoryBlock* db= malloc(sizeof(DirectoryBlock));
 	FirstFileBlock* ffb= malloc(sizeof(FirstFileBlock));
 	fprintf(stderr,"%s -> listing content of %s \n",__func__,fdb->fcb.name);
 	int first_block_flag=TRUE;
 	int n_block=-1;
-	for(i=0; i < fdb->num_entries; i++){
-		
-		fprintf(stderr,"%s -> ",__func__);
+	
+	//for(j=0; j < fdb->num_entries; j++){
+	j = 0;
+	i = 0;
+	while ( j < fdb->num_entries )
+	{	
+		//fprintf(stderr,"%s -> ",__func__);
 		
 		if(i<limit && first_block_flag){
 			//fprintf(stderr,"%d\n",fdb->file_inodes[i]);
-			if(fdb->file_inodes[i]<0) continue;
-			ret=DiskDriver_readInode(fs->disk,inode,fdb->file_inodes[i] );
-			if(ret<0) return -1;
-			ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
-			if(ret<0) return -1;
-			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
-			
-			//fprintf(stderr, "Data ultima modifica %ld, data ultimo accesso %ld, data creazione %ld\n", inode->dataUltimaModifica, inode->dataUltimoAccesso, inode->dataCreazione);
-			//fprintf(stderr, "Data strutturata ultima modifica: %s", ctime(&(inode->dataUltimaModifica)));
-			//fprintf(stderr, "Data strutturata ultimo accesso: %s", ctime(&(inode->dataUltimoAccesso)));
-			//fprintf(stderr, "Data strutturata datacreazione: %s", ctime(&(inode->dataCreazione)));
-			if(inode->tipoFile=='r')
+			//if(fdb->file_inodes[i]<0) continue;
+			if ( fdb->file_inodes[i] != - 1)
 			{
-				//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				ret=DiskDriver_readInode(fs->disk,inode,fdb->file_inodes[i] );
+				if(ret<0) return -1;
+				ret=DiskDriver_readBlock(fs->disk,ffb,inode->primoBlocco);
+				if(ret<0) return -1;
+				printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
+				j++;
+				//fprintf(stderr, "Data ultima modifica %ld, data ultimo accesso %ld, data creazione %ld\n", inode->dataUltimaModifica, inode->dataUltimoAccesso, inode->dataCreazione);
+				//fprintf(stderr, "Data strutturata ultima modifica: %s", ctime(&(inode->dataUltimaModifica)));
+				//fprintf(stderr, "Data strutturata ultimo accesso: %s", ctime(&(inode->dataUltimoAccesso)));
+				//fprintf(stderr, "Data strutturata datacreazione: %s", ctime(&(inode->dataCreazione)));
+				if(inode->tipoFile=='r')
+				{
+					//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+						//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+					fprintf(stderr,"%c %ld " ,inode->tipoFile,inode->dimensioneFile);
 					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr,"%c %ld " ,inode->tipoFile,inode->dimensioneFile);
-				//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
-				fprintf(stderr,"%s\n", ffb->fcb.name);
-			}
-			else
-			{
-				//fprintf(stderr," %c %ld %.5s %.5s %.5s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr,"%c %ld " ,inode->tipoFile,inode->dimensioneFile);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
-				fprintf(stderr, ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataCreazione))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimoAccesso))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimaModifica))+11);
+					fprintf(stderr,"%s\n", ffb->fcb.name);
+				}
+				else
+				{
+					//fprintf(stderr," %c %ld %.5s %.5s %.5s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+						//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+					fprintf(stderr,"%c %ld " ,inode->tipoFile,inode->dimensioneFile);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataCreazione))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimoAccesso))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimaModifica))+11);
+					fprintf(stderr, ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+				}
 			}
 		}
 		if(i>=limit && first_block_flag){	//c è bisogno di altri  blocchi (db) e venivamo da fdb
@@ -1851,30 +1872,34 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			if(n_block==-1) break;
 			ret=DiskDriver_readBlock(fs->disk,db,n_block);	//caricato il db
 			if(ret<0) return -1;
-			if(db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] < 0) continue;
-			ret=DiskDriver_readInode(fs->disk,ffb,db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] );
-			if(ret<0) return -1;
-			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
-			if(inode->tipoFile=='r')
+			//if(db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] < 0) continue;
+			if ( db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] != -1 )
 			{
-				//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
-					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
-				fprintf(stderr,"%s\n", ffb->fcb.name);
-				
-			}
-			else
-			{
-				//fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
-				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
-				fprintf(stderr, ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+				ret=DiskDriver_readInode(fs->disk,ffb,db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] );
+				if(ret<0) return -1;
+				printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
+				j++;
+				if(inode->tipoFile=='r')
+				{
+					//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+					fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+						//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataCreazione))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimoAccesso))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimaModifica))+11);
+					fprintf(stderr,"%s\n", ffb->fcb.name);
+					
+				}
+				else
+				{
+					//fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+						//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+					fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataCreazione))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimoAccesso))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimaModifica))+11);
+					fprintf(stderr, ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+				}
 			}
 		}
 		else if(i>=limit){
@@ -1882,16 +1907,37 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			if(n_block==-1) break;
 			ret=DiskDriver_readBlock(fs->disk,db,n_block);
 			if(ret<0) return -1;
-			if(db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] < 0) continue;
-			ret=DiskDriver_readInode(fs->disk,ffb,db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] );
-			if(ret<0) return -1;
-			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
-			if(inode->tipoFile=='r')
-				fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-			else
-				fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);			}
+			//if(db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] < 0) continue;
+			if ( db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] != -1 )
+			{
+				ret=DiskDriver_readInode(fs->disk,ffb,db->file_inodes[(i-limit)%(sizeof(DirectoryBlock)-sizeof(BlockHeader))] );
+				if(ret<0) return -1;
+				printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
+				j++;
+				if(inode->tipoFile=='r')
+				{
+					//	fprintf(stderr," %c %ld %.8s %.8s %.8s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+					//		ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+					fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+						//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataCreazione))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimoAccesso))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimaModifica))+11);
+					fprintf(stderr,"%s\n", ffb->fcb.name);
+				}
+				else
+				{
+					//fprintf(stderr," %c %ld %.8s %.8s %.8s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+						//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);		
+					fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataCreazione))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimoAccesso))+11);
+					fprintf(stderr,"%.8s ", ctime(&(inode->dataUltimaModifica))+11);
+					fprintf(stderr, ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+				}
+			}
+		}
+		i++;
 	}
 		
 	return 0;
