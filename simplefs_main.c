@@ -284,7 +284,7 @@ int main(int na, char **va)
 				{
 					do
 					{
-						printf("How many bytes do you want to write at the current position? ");
+						printf("How many bytes do you want to read at the current position? ");
 						scanf("%d", &numeroBytes);
 						getchar();
 					} while(numeroBytes <= 0);

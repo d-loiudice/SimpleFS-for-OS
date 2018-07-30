@@ -497,6 +497,7 @@ int SimpleFS_readDir(char** names, DirectoryHandle* d)
 		}
 		//indexNames = indexNames + 1;
 	}
+	DiskDriver_flush(d->sfs->disk);
 	return 0;
 }
 
@@ -815,6 +816,7 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 	//aggiornamento inode
 	f->pos_in_file = posizione;
 	in_read->dataUltimaModifica=time(NULL);
+	fprintf(stderr, "SimpleFS_write() -> Aggiornata ultima modifica a: %ld\n", in_read->dataUltimaModifica);
 	if (posizione > in_read->dimensioneFile)
 	{
 		in_read->dimensioneFile = posizione;
@@ -823,6 +825,10 @@ int SimpleFS_write(FileHandle* f, void* data, int size){
 	if(ret < 0){
 		perror("erorre write inode in write simplefs");
 		return -1;
+	}
+	else
+	{
+		fprintf(stderr, "SimpleFS_write()-> Aggiornato inode per ultima modifica: %d\n", f->inode);
 	}
 		
 	free(in_read);
@@ -1184,7 +1190,7 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 	Inode* inodeRead = NULL;
 	FirstDirectoryBlock* fdbRead;
 	int dimensione;
-	int indexInode;
+	int indexInode = -1;
 	if ( strncmp(dirname, "..", 128) == 0 )
 	{
 		// Vado al livello superiore
@@ -1349,6 +1355,7 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 							fprintf(stderr, "SimpleFS_changeDir() -> Errore durante la lettura dell'inode %d\n", d->fdb->file_inodes[i]);
 						}
 						free(inodeRead);
+						inodeRead = NULL;
 					}
 					i++;
 				}
@@ -1389,21 +1396,29 @@ int SimpleFS_changeDir(DirectoryHandle* d, char* dirname)
 		}*/
 	}
 	
-	if ( inodeRead != NULL )
+	if ( indexInode != -1)
 	{
-		// Aggiorno l'inode, ho il suo indice in index_inode
-		inodeRead->dataUltimoAccesso = time(NULL);
-		if ( DiskDriver_writeInode(d->sfs->disk, inodeRead, indexInode) != -1 )
+		inodeRead = malloc(sizeof(Inode));
+		if ( DiskDriver_readInode(d->sfs->disk, inodeRead, indexInode) != -1 )
 		{
-			// OK
-			fprintf(stderr, "SimpleFS_changeDir() -> aggiornato data ultimo accesso di inode %d\n", indexInode);
+			// Aggiorno l'inode, ho il suo indice in index_inode
+			inodeRead->dataUltimoAccesso = time(NULL);
+			if ( DiskDriver_writeInode(d->sfs->disk, inodeRead, indexInode) != -1 )
+			{
+				// OK
+				fprintf(stderr, "SimpleFS_changeDir() -> aggiornato data ultimo accesso di inode %d\n", indexInode);
+			}
+			else
+			{
+				fprintf(stderr, "SimpleFS_changeDir() -> errore nell'aggiornamento data ultimo accesso di inode %d\n", indexInode);
+			}
 		}
 		else
 		{
-			fprintf(stderr, "SimpleFS_changeDir() -> errore nell'aggiornamento data ultimo accesso di inode %d\n", indexInode);
+			fprintf(stderr, "SimpleFS_changeDir() -> errore nella lettura per l'aggiornamento data ultimo accesso di inode %d\n", indexInode);
 		}
 	}
-	
+	DiskDriver_flush(d->sfs->disk);
 	return ret;
 }
 /*
@@ -1804,12 +1819,31 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			if(ret<0) return -1;
 			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
 			
+			//fprintf(stderr, "Data ultima modifica %ld, data ultimo accesso %ld, data creazione %ld\n", inode->dataUltimaModifica, inode->dataUltimoAccesso, inode->dataCreazione);
+			//fprintf(stderr, "Data strutturata ultima modifica: %s", ctime(&(inode->dataUltimaModifica)));
+			//fprintf(stderr, "Data strutturata ultimo accesso: %s", ctime(&(inode->dataUltimoAccesso)));
+			//fprintf(stderr, "Data strutturata datacreazione: %s", ctime(&(inode->dataCreazione)));
 			if(inode->tipoFile=='r')
-				fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+			{
+				//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+				//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
+				fprintf(stderr,"%s\n", ffb->fcb.name);
+			}
 			else
-				fprintf(stderr," %c %ld %.5s %.5s %.5s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+			{
+				//fprintf(stderr," %c %ld %.5s %.5s %.5s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
+				fprintf(stderr, ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+			}
 		}
 		if(i>=limit && first_block_flag){	//c è bisogno di altri  blocchi (db) e venivamo da fdb
 			first_block_flag=FALSE;
@@ -1822,11 +1856,26 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			if(ret<0) return -1;
 			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
 			if(inode->tipoFile=='r')
-				fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+			{
+				//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
+				fprintf(stderr,"%s\n", ffb->fcb.name);
+				
+			}
 			else
-				fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+			{
+				//fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
+				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
+				fprintf(stderr, ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+			}
 		}
 		else if(i>=limit){
 			n_block=db->header.next_block;
