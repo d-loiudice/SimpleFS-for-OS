@@ -1827,7 +1827,7 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			{
 				//fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+				fprintf(stderr,"%c %ld " ,inode->tipoFile,inode->dimensioneFile);
 				//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
 				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
 				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
@@ -1838,11 +1838,11 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			{
 				//fprintf(stderr," %c %ld %.5s %.5s %.5s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					//ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
-				fprintf(stderr," %c %ld " ,inode->tipoFile,inode->dimensioneFile);
+				fprintf(stderr,"%c %ld " ,inode->tipoFile,inode->dimensioneFile);
 				fprintf(stderr,"%.5s ", ctime(&(inode->dataCreazione))+11);
 				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimoAccesso))+11);
 				fprintf(stderr,"%.5s ", ctime(&(inode->dataUltimaModifica))+11);
-				fprintf(stderr, ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
+				fprintf(stderr, ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET "\n", ffb->fcb.name);
 			}
 		}
 		if(i>=limit && first_block_flag){	//c è bisogno di altri  blocchi (db) e venivamo da fdb
