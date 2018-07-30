@@ -160,8 +160,12 @@ void SimpleFS_format(SimpleFS* fs)
 		DiskDriver_flush(fs->disk);
 		free(inode);
 		free(bitmapInode);
+		
 	}
+
+
 }
+
 
 // creates an empty file in the directory d
 // returns null on error (file existing, no free blocks inodes and datas)
@@ -530,6 +534,10 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 			inode=malloc(sizeof(Inode));
 			ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
 			if(ret<0) return NULL;
+			if(inode->tipoFile!='r'){
+				fprintf(stderr,"%s -> Not valid file name (it's a directory)\n",__func__);
+				return NULL;
+				}
 			ffb=malloc(sizeof(FirstFileBlock));
 			ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
 			if(ret<0) return NULL;
@@ -559,6 +567,10 @@ FileHandle* SimpleFS_openFile(DirectoryHandle* d, const char* filename){
 				inode=malloc(sizeof(Inode));
 				ret=DiskDriver_readInode(d->sfs->disk,inode,in_index);
 				if(ret<0) return NULL;
+				if(inode->tipoFile!='r'){
+				fprintf(stderr,"%s -> Not valid file name (it's a directory)\n",__func__);
+				return NULL;
+				}
 				ffb=malloc(sizeof(FirstFileBlock));
 				ret=DiskDriver_readBlock(d->sfs->disk,ffb,inode->primoBlocco);
 				if(ret<0) return NULL;
