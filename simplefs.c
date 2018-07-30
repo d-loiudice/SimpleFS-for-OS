@@ -995,8 +995,9 @@ int SimpleFS_read(FileHandle* f, void* data, int size){
 	//in_read->dataUltimaModifica=time(NULL);
 	if (posizione > in_read->dimensioneFile)
 	{
-		in_read->dimensioneFile = posizione;
+		//in_read->dimensioneFile = posizione;
 	}
+	in_read->dataUltimoAccesso=time(NULL);
 	ret= DiskDriver_writeInode(f->sfs->disk,in_read,f->inode);
 	if(ret < 0){
 		perror("erorre write inode in read simplefs");
@@ -1817,10 +1818,10 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
 			
 			if(inode->tipoFile=='r')
-				fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
-					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
+				fprintf(stderr," %c %ld %.8s %.8s %.8s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+					ctime(&(inode)->dataUltimoAccesso)+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
 			else
-				fprintf(stderr," %c %ld %.5s %.5s %.5s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				fprintf(stderr," %c %ld %.8s %.8s %.8s"  ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
 		}
 		if(i>=limit && first_block_flag){	//c è bisogno di altri  blocchi (db) e venivamo da fdb
@@ -1834,10 +1835,10 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			if(ret<0) return -1;
 			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
 			if(inode->tipoFile=='r')
-				fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				fprintf(stderr," %c %ld %.8s %.8s %.8s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
 			else
-				fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				fprintf(stderr," %c %ld %.8s %.8s %.8s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
 		}
 		else if(i>=limit){
@@ -1850,10 +1851,10 @@ int SimpleFS_listFiles(SimpleFS* fs){
 			if(ret<0) return -1;
 			printPermessi(inode->permessiUtente,inode->permessiGruppo,inode->permessiAltri);
 			if(inode->tipoFile=='r')
-				fprintf(stderr," %c %ld %.5s %.5s %.5s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				fprintf(stderr," %c %ld %.8s %.8s %.8s %s \n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);
 			else
-				fprintf(stderr," %c %ld %.5s %.5s %.5s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
+				fprintf(stderr," %c %ld %.8s %.8s %.8s" ANSI_COLOR_CYAN " %s" ANSI_COLOR_RESET "\n" ,inode->tipoFile,inode->dimensioneFile,ctime(&(inode->dataCreazione))+11,
 					ctime(&(inode->dataUltimoAccesso))+11,ctime(&(inode->dataUltimaModifica))+11,ffb->fcb.name);			}
 	}
 		
