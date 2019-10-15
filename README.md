@@ -71,7 +71,7 @@ Inode blocks (Inode Bitmap).
 
 ## Credits:
 
-Project made by three cs students :
- Tiziano Bari -> https://github.com/RareAverage301
- Giuseppe Capaldi -> https://github.com/N0t-A-G3n1us
- Davide Lo Iudice -> https://github.com/LinguaggioScalabile
+Project made by three cs students : <br>
+ Tiziano Bari -> https://github.com/RareAverage301 <br>
+ Giuseppe Capaldi -> https://github.com/N0t-A-G3n1us <br>
+ Davide Lo Iudice -> https://github.com/LinguaggioScalabile <br>
