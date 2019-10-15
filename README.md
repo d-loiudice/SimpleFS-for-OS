@@ -2,14 +2,22 @@
 
 Academic project made by three people in order to build a simple virtual file system.
 
-#Istruction :
-to compile, in shell exec:
-$ make so_game
+## Instructions :
 
-to launch the program:
-TODO
+To compile:
+$ make simple_fs 
+to run the control interface (inside bash, no gui provided):
+$ ./simple_fs
 
-# Mimimum requirements for this academic project
+## Modules description:
+- bitmap.h -> all the functions about the two bitmaps
+- disk_driver.h -> functions about block memory of our File System 
+- simplefs.h -> functions and data to manage directory and files at high level:
+	create,read,list,remove them
+- inode.h in ->  data structure for the inode metadata
+
+
+## Project requirements:
  
  File System 
    implement a file system interface using binary files
@@ -48,24 +56,15 @@ file and directories stored in D
 - Last blocks (D) are used to  store file and directories
  
  
-# About BitMap
+## About the BitMap concept
 Bitmap are data structures implemented with arrays of char in wich each bit
 of a char entry, show if the block in disk with the index of 
 the block + the microindex of the bit is free (0 value) or allocated (1 value).
 We use two instances of them one for data blocks (Data Bitmap) and one for 
 Inode blocks (Inode Bitmap).
  
-# About file sources
-- bitmap.h -> all the functions about the two bitmaps
-- disk_driver.h -> functions about block memory of our File System 
-- simplefs.h -> functions and data to manage directory and files at high level:
-	create,read,list,remove them
-- inode.h in ->  data structure for the inode metadata
 
-To compile:
-$ make simple_fs 
-to run the control interface (inside bash, no gui provided):
-$ ./simple_fs
+## Credits:
 
 Project made by three cs students :
  Tiziano Bari -> https://github.com/RareAverage301
