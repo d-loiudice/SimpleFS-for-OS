@@ -5,9 +5,14 @@ Academic project made by three people in order to build a simple virtual file sy
 ## Instructions :
 
 To compile:
+```console
 $ make simple_fs 
+```
 to run the control interface (inside bash, no gui provided):
+```console
 $ ./simple_fs
+```
+
 
 ## Modules description:
 - bitmap.h -> all the functions about the two bitmaps
